@@ -5,7 +5,7 @@
 Einmalig vorbereiten:
 
 1. **Node.js installieren** (Version 20 oder neuer): https://nodejs.org, den Knopf "LTS" wählen. Danach das Terminal neu öffnen.
-2. **Projekt holen:** im Terminal `git clone <REPO_URL> abholdemo` und `cd abholdemo` (oder auf GitHub "Code", dann "Download ZIP", entpacken und den Ordner im Terminal öffnen).
+2. **Projekt holen:** im Terminal `git clone https://github.com/juansp2424/abholdemo.git abholdemo` und `cd abholdemo` (oder auf GitHub "Code", dann "Download ZIP", entpacken und den Ordner im Terminal öffnen).
 
 Dann jedes Mal:
 

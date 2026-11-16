@@ -1,0 +1,16 @@
+{
+  "name": "abholdemo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "concurrently -k -n api,betrieb,kunde -c blue,green,magenta \"npm run dev -w @abholdemo/api\" \"npm run dev -w @abholdemo/betrieb\" \"npm run dev -w @abholdemo/kunde\"",
+    "test": "npm test -w @abholdemo/api",
+    "build": "npm run build -w @abholdemo/betrieb && npm run build -w @abholdemo/kunde",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.6.3"
+  }
+}

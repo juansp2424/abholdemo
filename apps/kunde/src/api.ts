@@ -1,0 +1,65 @@
+import type {
+  ApiError,
+  BookSlotRequest,
+  Channel,
+  ErrorCode,
+  PublicBusiness,
+  PublicOrderView,
+  PublicSlotsResponse,
+  SubscribeRequest,
+  UnsubscribeRequest,
+} from "@abholdemo/shared";
+
+export class ApiFailure extends Error {
+  code: ErrorCode | "NETWORK";
+  status: number;
+  constructor(status: number, code: ErrorCode | "NETWORK", message: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method,
+      credentials: "omit",
+      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiFailure(0, "NETWORK", "Keine Verbindung. Bitte versuchen Sie es gleich noch einmal.");
+  }
+  if (!res.ok) {
+    let err: ApiError | null = null;
+    try {
+      err = (await res.json()) as ApiError;
+    } catch {
+      /* ignore */
+    }
+    throw new ApiFailure(
+      res.status,
+      err?.error.code ?? "INTERNAL",
+      err?.error.message ?? "Etwas ist schiefgelaufen. Bitte versuchen Sie es noch einmal.",
+    );
+  }
+  return (await res.json()) as T;
+}
+
+const biz = (web: string) => `/api/public/b/${encodeURIComponent(web)}`;
+const ord = (web: string, code: string) => `${biz(web)}/orders/${encodeURIComponent(code)}`;
+
+export const getBusiness = (web: string) => call<PublicBusiness>("GET", biz(web));
+export const getOrder = (web: string, code: string) => call<PublicOrderView>("GET", ord(web, code));
+export const getSlots = (web: string, code: string) =>
+  call<PublicSlotsResponse>("GET", `${ord(web, code)}/slots`);
+export const subscribe = (web: string, code: string, channel: Channel, contact: string, consent: boolean) =>
+  call<PublicOrderView>("POST", `${ord(web, code)}/subscribe`, { channel, contact, consent } satisfies SubscribeRequest);
+export const unsubscribe = (web: string, code: string) =>
+  call<PublicOrderView>("POST", `${ord(web, code)}/unsubscribe`, { source: "LINK" } satisfies UnsubscribeRequest);
+export const bookSlot = (web: string, code: string, start: string) =>
+  call<PublicOrderView>("PUT", `${ord(web, code)}/slot`, { start } satisfies BookSlotRequest);
+export const cancelSlot = (web: string, code: string) =>
+  call<PublicOrderView>("DELETE", `${ord(web, code)}/slot`);

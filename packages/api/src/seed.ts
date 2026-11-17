@@ -31,7 +31,7 @@ export function defaultSettings(): BusinessSettings {
     pickupDeadlineDays: 14,
     defaultChannel: "MAIL",
     messageTemplate: DEFAULT_MESSAGE_TEMPLATE,
-    quickCategories: [],
+    quickCategories: ["Wartung Paket 1", "Reifenwechsel (Sommer) mit Einlagerung"],
   };
 }
 

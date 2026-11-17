@@ -134,12 +134,13 @@ describe("settings", () => {
 });
 
 describe("quick categories", () => {
-  it("starts empty, is owner defined, validated, trimmed, unique and visible to all staff", async () => {
+  it("starts with the two demo entries, is owner defined, validated, trimmed, unique and visible to all staff", async () => {
     const env = makeEnv();
     const owner = await env.token();
     const staff = await env.token("mitarbeiter");
-    expect((await env.api(owner, "GET", "/api/betrieb/settings")).json.quickCategories).toEqual([]);
-    expect((await env.api(staff, "GET", "/api/betrieb/business")).json.quickCategories).toEqual([]);
+    const demo = ["Wartung Paket 1", "Reifenwechsel (Sommer) mit Einlagerung"];
+    expect((await env.api(owner, "GET", "/api/betrieb/settings")).json.quickCategories).toEqual(demo);
+    expect((await env.api(staff, "GET", "/api/betrieb/business")).json.quickCategories).toEqual(demo);
     const cur = (await env.api(owner, "GET", "/api/betrieb/settings")).json;
     const put = (quickCategories: unknown) => env.api(owner, "PUT", "/api/betrieb/settings", { ...cur, quickCategories });
     const ok = await put(["  Ölwechsel ", "Reifenwechsel", "Schlauch   wechseln"]);

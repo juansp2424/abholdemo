@@ -4,6 +4,14 @@ Wichtige Änderungen an der Betriebs App (`apps/betrieb`) und der Kundenwebsite 
 
 Die Zahl hinter dem Datum ist der Commit im Repo, damit sich jede Änderung nachvollziehen lässt (`git show <Commit>`). Planung und Begründungen stehen in `docs/PLAN.md`, der Vertrag zwischen den Teilen in `docs/CONTRACT.md`, die Prüfberichte in `docs/REVIEW.md`.
 
+## 2026-11-17: Schnellauswahl der Demo gespeichert (Commit folgt)
+
+**Betriebs App**
+* Beim neuen Auftrag erscheinen von Anfang an zwei Knöpfe: "Wartung Paket 1" und "Reifenwechsel (Sommer) mit Einlagerung". Der Inhaber kann sie in den Einstellungen ändern, löschen oder ergänzen.
+
+**Backend**
+* Diese zwei Einträge sind Teil der Demodaten. Sie kommen nach "Demodaten zurücksetzen" und bei einem neuen Start wieder. Bereits vorhandene Datendateien bleiben unverändert.
+
 ## 2026-11-17: Betriebs App wie eine Apple App bedient (`d3acf5b`)
 
 Neue Optik und Bedienung der Betriebs App nach den Apple Richtlinien. Farben und Schriften sind hier bewusst nicht aufgeführt. Die Funktionen sind unverändert.

@@ -51,7 +51,7 @@ Vorhandene Demo Aufträge für die Kundenseite: `D3FY6W` (abholbereit, ohne Eint
 
 ## Demoablauf (drei Minuten)
 
-**Einmal vorher (30 s):** Menü "Einstellungen", Abschnitt "Schnellauswahl für neue Aufträge": ein paar Einträge anlegen, zum Beispiel Ölwechsel, Reifenwechsel, Bremsen wechseln (Auto) oder Schlauch wechseln, Kette wechseln (Fahrrad), dann "Speichern". Ab dann erscheinen sie als Knöpfe beim neuen Auftrag. Die Demo gibt nichts vor, die Schnellauswahl ist am Anfang leer.
+**Schnellauswahl:** Die Demo bringt zwei Einträge mit ("Wartung Paket 1" und "Reifenwechsel (Sommer) mit Einlagerung"). Sie erscheinen als Knöpfe beim neuen Auftrag. Der Inhaber kann sie unter "Einstellungen", Abschnitt "Schnellauswahl für neue Aufträge", ändern, löschen oder ergänzen. Nach "Demodaten zurücksetzen" sind wieder die zwei Einträge da.
 
 Zwei Fenster nebeneinander: links Betriebs App (Tablet), rechts Kundenwebsite (Handy Ansicht).
 

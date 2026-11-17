@@ -169,3 +169,7 @@ Neue Vorgabe des Auftraggebers: Werkstätten müssen Reparaturen verschieben kö
 * **Verhältnis zu R25 (genau eine Nachricht pro Auftrag):** R25 gilt für die automatische Nachricht "Abholbereit" an Kunden, die sich auf der Kundenseite eingetragen haben. Die Mitteilung ist eine ausdrückliche, manuelle Handlung des Betriebs an den Kontakt, den der Kunde bei der Abgabe selbst genannt hat. Sie braucht keinen Eintrag auf der Kundenseite, zählt nicht zur einen Abholbereit Nachricht und kann mehrfach gesendet werden.
 * **Grenzen:** keine Mitteilung bei Abgeholt und Storniert. Die Länge ist auf 500 Zeichen begrenzt. Kein WhatsApp Weg (nur Mail und SMS nach der Regel oben). Das Datum der voraussichtlichen Fertigstellung ändert sich nicht automatisch, der Betrieb kann es im Text nennen.
 * **Datenschutz Hinweis für später:** Die Telefonnummer als Pflichtfeld und der Versand ohne Eintrag des Kunden brauchen in einem echten Betrieb einen passenden Hinweis bei der Annahme. In der Demo ist das nicht abgebildet.
+
+## 12. Schnellauswahl der Demo (2026-11-17)
+
+Die Demo startet nicht mehr mit leerer Schnellauswahl, sondern mit zwei Einträgen, die der Auftraggeber selbst angelegt hat: "Wartung Paket 1" und "Reifenwechsel (Sommer) mit Einlagerung". Sie sind Teil der Seed Daten und kommen nach "Demodaten zurücksetzen" und bei jedem neuen Start wieder. Der Betrieb kann sie in den Einstellungen jederzeit ändern. Weiterhin gilt: Es gibt keine fest eingebaute Schnellauswahl pro Branche. Vorhandene Datendateien werden nicht überschrieben.

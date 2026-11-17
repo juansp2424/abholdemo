@@ -4,7 +4,7 @@ Wichtige Änderungen an der Betriebs App (`apps/betrieb`) und der Kundenwebsite 
 
 Die Zahl hinter dem Datum ist der Commit im Repo, damit sich jede Änderung nachvollziehen lässt (`git show <Commit>`). Planung und Begründungen stehen in `docs/PLAN.md`, der Vertrag zwischen den Teilen in `docs/CONTRACT.md`, die Prüfberichte in `docs/REVIEW.md`.
 
-## 2026-11-17: Zentrale Kundenseite, Anhänger mit QR Code, Statuslink per SMS (Commit folgt)
+## 2026-11-17: Zentrale Kundenseite, Anhänger mit QR Code, Statuslink per SMS (`0f37b9f`)
 
 **Kundenwebsite**
 * Neue zentrale Startseite für alle Betriebe: Auftragsnummer und die letzten vier Ziffern der Telefonnummer eingeben. Danach öffnet sich die Statusseite des richtigen Betriebs mit Name, Logo und Abholzeiten. Bei falscher Nummer oder falschen Ziffern kommt immer dieselbe neutrale Meldung.

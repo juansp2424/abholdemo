@@ -4,6 +4,19 @@ Wichtige Änderungen an der Betriebs App (`apps/betrieb`) und der Kundenwebsite 
 
 Die Zahl hinter dem Datum ist der Commit im Repo, damit sich jede Änderung nachvollziehen lässt (`git show <Commit>`). Planung und Begründungen stehen in `docs/PLAN.md`, der Vertrag zwischen den Teilen in `docs/CONTRACT.md`, die Prüfberichte in `docs/REVIEW.md`.
 
+## 2026-11-17: Betriebs App wie eine Apple App bedient (Commit folgt)
+
+Neue Optik und Bedienung der Betriebs App nach den Apple Richtlinien. Farben und Schriften sind hier bewusst nicht aufgeführt. Die Funktionen sind unverändert.
+
+**Betriebs App**
+* Menü: Statt Zeichen gibt es jetzt Linien Symbole. Auf dem Tablet steht es als Seitenleiste links, auf dem Handy als Tab Leiste unten. Kopfleiste und Menü sind durchscheinend.
+* Listen: Die Aufträge stehen in einer zusammenhängenden Liste mit feinen Trennlinien und Pfeil am Zeilenende, Status als kleine Kapseln. Filter sind Kapseln.
+* Eingabe: Felder, Knöpfe (gefüllt, getönt, einfach) und Rückmeldung beim Drücken wie bei iOS. Alle Tippflächen sind mindestens 44 Punkte hoch.
+* Einstellungen: "Geöffnet" ist ein iOS Schalter statt eines Kästchens.
+* Kalender: Die Balken sehen aus wie Termine in der Kalender App. Die Linie für die aktuelle Zeit ist rot.
+* Neu: Dunkelmodus (folgt der Einstellung des Geräts). Außerdem werden weniger Bewegung, weniger Transparenz und mehr Kontrast beachtet.
+* Im Auftrag heißt das Feld jetzt "Telefon" statt "Handy".
+
 ## 2026-11-17: Telefonnummer ist Pflicht, Mitteilungen an den Kunden (`9941a88`)
 
 **Betriebs App**

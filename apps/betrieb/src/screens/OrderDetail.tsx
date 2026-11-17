@@ -119,7 +119,7 @@ function Body(props: {
           <dd>{o.customerName ?? "Nicht erfasst"}</dd>
           <dt>Mail</dt>
           <dd>{o.customerEmail ?? "Nicht erfasst"}</dd>
-          <dt>Handy</dt>
+          <dt>Telefon</dt>
           <dd>{o.customerPhone ?? "Nicht erfasst"}</dd>
           <dt>Geplantes Abholdatum</dt>
           <dd>{o.plannedPickupDate ? formatDayShort(o.plannedPickupDate) : "Nicht erfasst"}</dd>

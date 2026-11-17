@@ -14,6 +14,7 @@ import { Poster } from "./screens/Poster";
 import { Settings } from "./screens/Settings";
 import { Staff } from "./screens/Staff";
 import { DemoTools } from "./screens/DemoTools";
+import { Icon } from "./icons";
 
 function useHashRoute(): string {
   const read = () => window.location.hash.replace(/^#/, "") || "/auftraege";
@@ -38,14 +39,14 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { path: "/auftraege", label: "Aufträge", icon: "▤" },
-  { path: "/neu", label: "Neuer Auftrag", icon: "＋" },
-  { path: "/kalender", label: "Kalender", icon: "◷" },
-  { path: "/nachrichten", label: "Nachrichten", icon: "✉" },
-  { path: "/aufsteller", label: "Aufsteller", icon: "▦" },
-  { path: "/einstellungen", label: "Einstellungen", icon: "⚙", ownerOnly: true },
-  { path: "/mitarbeiter", label: "Mitarbeiter", icon: "☺", ownerOnly: true },
-  { path: "/demo", label: "Demo", icon: "★" },
+  { path: "/auftraege", label: "Aufträge", icon: "list" },
+  { path: "/neu", label: "Neuer Auftrag", icon: "plus" },
+  { path: "/kalender", label: "Kalender", icon: "calendar" },
+  { path: "/nachrichten", label: "Nachrichten", icon: "message" },
+  { path: "/aufsteller", label: "Aufsteller", icon: "qr" },
+  { path: "/einstellungen", label: "Einstellungen", icon: "sliders", ownerOnly: true },
+  { path: "/mitarbeiter", label: "Mitarbeiter", icon: "people", ownerOnly: true },
+  { path: "/demo", label: "Demo", icon: "sparkle" },
 ];
 
 export function App() {
@@ -167,7 +168,7 @@ function Shell({ user, onLogout }: { user: StaffUser; onLogout: () => void }) {
           {items.map((n) => (
             <a key={n.path} href={`#${n.path}`} className={`nav-item${active === n ? " active" : ""}`} aria-current={active === n ? "page" : undefined}>
               <span className="nav-icon" aria-hidden="true">
-                {n.icon}
+                <Icon name={n.icon} />
               </span>
               <span className="nav-label">{n.label}</span>
             </a>

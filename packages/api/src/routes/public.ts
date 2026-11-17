@@ -1,7 +1,9 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
   CODE_REGEX,
+  PHONE_END_LENGTH,
   NEUTRAL_NOT_FOUND_MESSAGE,
+  type CentralOrderView,
   RATE_LIMIT_MESSAGE,
   SLOT_STATUSES,
   SUBSCRIBE_STATUSES,
@@ -46,22 +48,42 @@ type Resolved = { order: OrderRec } | { status: number; body: unknown };
 export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
   const db = () => ctx.store.db;
 
-  /** Finds the order for a public request. Unknown, malformed and foreign codes are one neutral failure. */
-  function resolve(req: FastifyRequest): Resolved {
-    const params = req.params as { webname: string; code: string };
+  const lastDigits = (phone: string | null) => (phone ?? "").replace(/\D/g, "").slice(-PHONE_END_LENGTH);
+
+  /**
+   * Finds an order by code. Unknown, malformed and foreign codes (and a wrong phone ending, when one is
+   * required) are one neutral failure and count towards the lock. `webname` undefined means the central page.
+   */
+  function resolveCode(req: FastifyRequest, rawCode: unknown, webname?: string, phoneEnd?: string): Resolved {
     const key = clientKey(req);
     if (ctx.limiter.isLocked(key)) return { status: 429, body: RATE_LIMITED };
-    const code = normalizeCode(params.code ?? "");
+    const code = normalizeCode(typeof rawCode === "string" ? rawCode : "");
     const order =
-      params.webname === db().settings.webname && CODE_REGEX.test(code)
+      (webname === undefined || webname === db().settings.webname) && CODE_REGEX.test(code)
         ? db().orders.find((o) => o.code === code)
         : undefined;
-    if (!order) {
+    if (!order || (phoneEnd !== undefined && lastDigits(order.customerPhone) !== phoneEnd)) {
       ctx.limiter.recordFail(key);
       return { status: 404, body: NEUTRAL_404 };
     }
     return { order };
   }
+
+  function resolve(req: FastifyRequest): Resolved {
+    const params = req.params as { webname: string; code: string };
+    return resolveCode(req, params.code, params.webname);
+  }
+
+  /** Same response time for found and not found (R10). */
+  async function padded(started: number) {
+    const wait = ctx.lookupMinMs - (Date.now() - started);
+    if (wait > 0) await sleep(wait);
+  }
+
+  const publicBusiness = (): PublicBusiness => {
+    const s = db().settings;
+    return { name: s.name, webname: s.webname, logoDataUrl: s.logoDataUrl, pickupDeadlineDays: s.pickupDeadlineDays, defaultChannel: s.defaultChannel };
+  };
 
   const ORDER = "/api/public/b/:webname/orders/:code";
 
@@ -70,20 +92,33 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
     if ((req.params as { webname: string }).webname !== s.webname) {
       return fail(404, "NOT_FOUND", "Diesen Betrieb gibt es nicht.");
     }
-    return {
-      name: s.name,
-      webname: s.webname,
-      logoDataUrl: s.logoDataUrl,
-      pickupDeadlineDays: s.pickupDeadlineDays,
-      defaultChannel: s.defaultChannel,
-    };
+    return publicBusiness();
+  });
+
+  // Central page: the code alone identifies the business.
+  app.get("/api/public/orders/:code", async (req, reply) => {
+    const started = Date.now();
+    const r = resolveCode(req, (req.params as { code: string }).code);
+    await padded(started);
+    if ("order" in r) return { business: publicBusiness(), order: toPublicView(db(), r.order) } satisfies CentralOrderView;
+    return reply.code(r.status).send(r.body);
+  });
+
+  // Central entry by hand: code plus the last digits of the phone number. Nothing personal goes into the URL.
+  app.post("/api/public/lookup", async (req, reply) => {
+    const started = Date.now();
+    const b = asObject(req.body);
+    const digits = typeof b.phoneEnd === "string" ? b.phoneEnd.replace(/\D/g, "") : "";
+    const r = resolveCode(req, b.code, undefined, digits.length === PHONE_END_LENGTH ? digits : "invalid");
+    await padded(started);
+    if ("order" in r) return { code: r.order.code };
+    return reply.code(r.status).send(r.body);
   });
 
   app.get(ORDER, async (req, reply) => {
     const started = Date.now();
     const r = resolve(req);
-    const wait = ctx.lookupMinMs - (Date.now() - started);
-    if (wait > 0) await sleep(wait); // same response time for found and not found (R10)
+    await padded(started);
     if ("order" in r) return toPublicView(db(), r.order);
     return reply.code(r.status).send(r.body);
   });

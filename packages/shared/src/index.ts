@@ -16,7 +16,17 @@ export const PORTS = { api: 4000, betrieb: 5173, kunde: 5174 } as const;
 /** Base URL of the customer website. Used for status links, QR code and messages. */
 export const KUNDE_BASE_URL = `http://localhost:${PORTS.kunde}`;
 
-/** Customer status page URL for an order. */
+/** Central customer page for an order. One address for all businesses: the code alone identifies the business. Used in messages and QR codes. */
+export function orderUrl(code: string): string {
+  return `${KUNDE_BASE_URL}/a/${code}`;
+}
+
+/** Central start page of the customer site (one printed stand for every business). */
+export function centralUrl(): string {
+  return KUNDE_BASE_URL;
+}
+
+/** Business scoped status page URL for an order (kept for old links). */
 export function statusUrl(webname: string, code: string): string {
   return `${KUNDE_BASE_URL}/b/${webname}/a/${code}`;
 }
@@ -214,7 +224,7 @@ export interface BusinessInfo {
   name: string;
   webname: string;
   logoDataUrl: string | null;
-  customerUrl: string; // businessUrl(webname), QR target
+  customerUrl: string; // centralUrl(), QR target of the stand
   quickCategories: string[]; // same list as in settings, so every staff member sees the chips
 }
 
@@ -466,6 +476,24 @@ export interface SubscribeRequest {
   channel: Channel;
   contact: string; // email for MAIL, phone for SMS and WHATSAPP
   consent: boolean; // must be true
+}
+
+/** Central entry: the code plus the last digits of the phone number given at intake (guards against guessing by hand). */
+export const PHONE_END_LENGTH = 4;
+
+export interface LookupRequest {
+  code: string;
+  phoneEnd: string; // last 4 digits of the phone number
+}
+
+export interface LookupResponse {
+  code: string; // normalized, open /a/{code}
+}
+
+/** Response of GET /api/public/orders/{code}: the business branding and the order view in one call. */
+export interface CentralOrderView {
+  business: PublicBusiness;
+  order: PublicOrderView;
 }
 
 export interface UnsubscribeRequest {

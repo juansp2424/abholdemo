@@ -129,7 +129,7 @@ describe("settings", () => {
     expect(ok.status).toBe(200);
     expect(ok.json).toMatchObject({ webname: "werkstatt-demo", name: "Neuer Name", pickupDeadlineDays: 7, slotCapacity: 3 });
     const prev = await env.api(t, "POST", "/api/betrieb/settings/preview", { template: "Fertig: {nummer} bei {betrieb} {link}" });
-    expect(prev.json.text).toBe("Fertig: ABC234 bei Neuer Name http://localhost:5174/b/werkstatt-demo/a/ABC234 Keine Nachricht mehr? Abbestellen: http://localhost:5174/b/werkstatt-demo/a/ABC234?abmelden=1");
+    expect(prev.json.text).toBe("Fertig: ABC234 bei Neuer Name http://localhost:5174/a/ABC234 Keine Nachricht mehr? Abbestellen: http://localhost:5174/a/ABC234?abmelden=1");
   });
 });
 

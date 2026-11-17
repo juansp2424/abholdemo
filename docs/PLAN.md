@@ -173,3 +173,15 @@ Neue Vorgabe des Auftraggebers: Werkstätten müssen Reparaturen verschieben kö
 ## 12. Schnellauswahl der Demo (2026-11-17)
 
 Die Demo startet nicht mehr mit leerer Schnellauswahl, sondern mit zwei Einträgen, die der Auftraggeber selbst angelegt hat: "Wartung Paket 1" und "Reifenwechsel (Sommer) mit Einlagerung". Sie sind Teil der Seed Daten und kommen nach "Demodaten zurücksetzen" und bei jedem neuen Start wieder. Der Betrieb kann sie in den Einstellungen jederzeit ändern. Weiterhin gilt: Es gibt keine fest eingebaute Schnellauswahl pro Branche. Vorhandene Datendateien werden nicht überschrieben.
+
+## 13. Zentrale Kundenseite (2026-11-17)
+
+Idee des Auftraggebers: Ein gedruckter Aufsteller für alle Betriebe (zum Beispiel 500 Stück), eine Adresse für alle Kunden.
+
+* **Zentrale Startseite** `/`: Auftragsnummer plus letzte vier Ziffern der Telefonnummer. Danach `/a/<Nummer>` mit Name, Logo und Abholzeiten des richtigen Betriebs. Die alten Adressen `/b/<Webname>` und `/b/<Webname>/a/<Nummer>` bleiben (R3: Kundenadressen über den Webnamen gilt nur noch dort).
+* **Links überall zentral:** Statusnachrichten, Erinnerung, Auftragslink und QR Code auf dem Anhänger zeigen auf `/a/<Nummer>`. Der Kunde muss nichts eintippen.
+* **Anhänger pro Auftrag:** druckbare Karte mit QR Code und Nummer (Betriebs App, im Auftrag und nach dem Speichern).
+* **Allgemeiner Aufsteller:** gleicher QR Code für alle Betriebe, ohne Betriebsname (abschaltbar, dann mit Namen). Ändert R21.
+* **Statuslink bei der Annahme per SMS**, wenn keine Mailadresse erfasst ist (Telefonnummer ist Pflicht). Ändert R27. SMS kostet 0,075 Euro je Auftrag, das steht in der Nachrichtenübersicht.
+* **Codes sind plattformweit eindeutig:** Die Prüfung beim Anlegen läuft gegen alle gespeicherten Aufträge. In der Demo gibt es einen Betrieb; für mehrere Betriebe muss das Datenmodell eine Betriebsnummer je Auftrag bekommen und die Eindeutigkeit als Datenbankregel gelten.
+* **Ehrliche Grenze der vier Ziffern:** Sie schützen nur die Eingabe von Hand. Der Link `/a/<Nummer>` (aus Nachrichten und vom QR Code) funktioniert bewusst ohne Ziffern, wie ein Paketlink. Wer Codes über die Schnittstelle durchprobiert, wird durch die Sperre (10 Fehlversuche pro Minute) und die Größe des Codes (rund 887 Millionen Möglichkeiten) gebremst, nicht durch die Ziffern. Die Statusseite zeigt keine persönlichen Daten. Wer Abholzeiten fremder Aufträge ändern könnte, bräuchte einen erratenen Code. Für den echten Betrieb sollte das mit längeren Codes oder einem geheimen Zusatz im Link verschärft werden.

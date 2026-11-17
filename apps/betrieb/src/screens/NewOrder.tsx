@@ -101,13 +101,16 @@ export function NewOrder() {
             {saved.code}
           </div>
           <p className="saved-item">{saved.item}</p>
-          {saved.customerEmail ? <p className="muted">Der Statuslink wurde an die Mailadresse vorbereitet (Demo, es wird nichts versendet).</p> : null}
+          <p className="muted">Der Statuslink wurde {saved.customerEmail ? "per Mail" : "per SMS"} vorbereitet (Demo, es wird nichts versendet).</p>
           <div className="btn-row">
             <button className="btn btn-primary btn-xl" onClick={reset} autoFocus>
               Nächster Auftrag
             </button>
             <button className="btn btn-secondary btn-xl" onClick={() => go(`/auftrag/${saved.id}`)}>
               Zum Auftrag
+            </button>
+            <button className="btn btn-secondary btn-xl" onClick={() => go(`/anhaenger/${saved.id}`)}>
+              Anhänger drucken
             </button>
           </div>
         </section>

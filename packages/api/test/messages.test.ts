@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHANNEL_COST_EUR, statusUrl } from "@abholdemo/shared";
+import { CHANNEL_COST_EUR, orderUrl } from "@abholdemo/shared";
 import { maskContact } from "../src/messages.js";
 import { PUB, createOrder, makeEnv, orderId, setStatus } from "./helpers.js";
 
@@ -21,27 +21,27 @@ describe("messages", () => {
     // no subscription: no message
     const plain = await createOrder(env, owner);
     await setStatus(env, owner, plain.id, "ABHOLBEREIT");
-    expect(env.db().messages.filter((m) => m.orderId === plain.id)).toHaveLength(0);
+    expect(env.db().messages.filter((m) => m.orderId === plain.id && m.type === "ABHOLBEREIT")).toHaveLength(0);
 
     // revoked subscription: no message
     const revoked = await createOrder(env, owner);
     await env.pub("POST", `${PUB}/orders/${revoked.code}/subscribe`, { channel: "MAIL", contact: "r@beispiel.de", consent: true });
     await env.pub("POST", `${PUB}/orders/${revoked.code}/unsubscribe`, { source: "LINK" });
     await setStatus(env, owner, revoked.id, "ABHOLBEREIT");
-    expect(env.db().messages.filter((m) => m.orderId === revoked.id)).toHaveLength(0);
+    expect(env.db().messages.filter((m) => m.orderId === revoked.id && m.type === "ABHOLBEREIT")).toHaveLength(0);
 
     // active subscription: exactly one
     const sub = await createOrder(env, owner, { item: "Abo Test" });
     await env.pub("POST", `${PUB}/orders/${sub.code}/subscribe`, { channel: "MAIL", contact: "kunde@beispiel.de", consent: true });
     await setStatus(env, owner, sub.id, "IN_ARBEIT");
-    expect(env.db().messages.filter((m) => m.orderId === sub.id)).toHaveLength(0);
+    expect(env.db().messages.filter((m) => m.orderId === sub.id && m.type === "ABHOLBEREIT")).toHaveLength(0);
     await setStatus(env, owner, sub.id, "ABHOLBEREIT");
     expect((await setStatus(env, owner, sub.id, "ABHOLBEREIT")).status).toBe(409); // no second one
     await setStatus(env, owner, sub.id, "ABGEHOLT");
-    const mine = env.db().messages.filter((m) => m.orderId === sub.id);
+    const mine = env.db().messages.filter((m) => m.orderId === sub.id && m.type !== "STATUSLINK");
     expect(mine).toHaveLength(1);
     expect(mine[0]).toMatchObject({ type: "ABHOLBEREIT", channel: "MAIL", costEur: 0, recipient: "kunde@beispiel.de" });
-    const link = statusUrl("werkstatt-demo", sub.code);
+    const link = orderUrl(sub.code);
     expect(mine[0].text).toContain(link);
     expect(mine[0].text).toContain(`Ihr Auftrag ${sub.code} bei Werkstatt Demo ist abholbereit`);
     expect(mine[0].text.endsWith(` Keine Nachricht mehr? Abbestellen: ${link}?abmelden=1`)).toBe(true);
@@ -55,22 +55,25 @@ describe("messages", () => {
     const o = await createOrder(env, owner);
     await env.pub("POST", `${PUB}/orders/${o.code}/subscribe`, { channel: "WHATSAPP", contact: "+49 151 00000011", consent: true });
     await setStatus(env, owner, o.id, "ABHOLBEREIT");
-    const m = env.db().messages.find((x) => x.orderId === o.id)!;
-    expect(m.text).toBe(`Hallo, ${o.code} ist fertig bei Werkstatt Demo: ${statusUrl("werkstatt-demo", o.code)} Antworten Sie STOP, dann bekommen Sie keine Nachricht mehr.`);
+    const m = env.db().messages.find((x) => x.orderId === o.id && x.type === "ABHOLBEREIT")!;
+    expect(m.text).toBe(`Hallo, ${o.code} ist fertig bei Werkstatt Demo: ${orderUrl(o.code)} Antworten Sie STOP, dann bekommen Sie keine Nachricht mehr.`);
   });
 
-  it("sends the STATUSLINK on intake with an email, free of charge", async () => {
+  it("sends the STATUSLINK on intake: mail if an email was captured (free), else SMS", async () => {
     const env = makeEnv();
     const owner = await env.token();
-    const none = await createOrder(env, owner);
-    expect(env.db().messages.filter((m) => m.orderId === none.id)).toHaveLength(0);
+    // without an email the status link goes by SMS to the (required) phone number
+    const none = await createOrder(env, owner, { item: "Nur Telefon", customerPhone: "+49 151 00000088" });
+    const sms = (await messages(env, owner)).messages.find((m: any) => m.orderId === none.id);
+    expect(sms).toMatchObject({ type: "STATUSLINK", channel: "SMS", recipientMasked: "+49 *** ****88", costEur: 0.075, link: orderUrl(none.code) });
+    expect(env.db().messages.filter((m) => m.orderId === none.id)).toHaveLength(1);
     const o = await createOrder(env, owner, { item: "Mit Mail", customerEmail: "kunde@beispiel.de" });
     const view = (await messages(env, owner)).messages.find((m: any) => m.orderId === o.id);
     expect(view).toMatchObject({
       type: "STATUSLINK", channel: "MAIL", recipientMasked: "k***@beispiel.de", costEur: 0,
-      deliveryStatus: "ZUGESTELLT_SIMULIERT", orderCode: o.code, link: statusUrl("werkstatt-demo", o.code),
+      deliveryStatus: "ZUGESTELLT_SIMULIERT", orderCode: o.code, link: orderUrl(o.code),
     });
-    expect(view.text).toBe(`Guten Tag, Ihr Auftrag ${o.code} bei Werkstatt Demo ist angenommen. Den Stand sehen Sie hier: ${statusUrl("werkstatt-demo", o.code)}`);
+    expect(view.text).toBe(`Guten Tag, Ihr Auftrag ${o.code} bei Werkstatt Demo ist angenommen. Den Stand sehen Sie hier: ${orderUrl(o.code)}`);
     expect(view.text).not.toContain("Mit Mail");
     // the intake mail does not subscribe the customer to the ready message
     await setStatus(env, owner, o.id, "ABHOLBEREIT");
@@ -123,14 +126,14 @@ describe("messages", () => {
     expect(start.monthTotalEur).toBe(0.075);
     const channels = [["SMS", "+49 151 00000021"], ["WHATSAPP", "+49 151 00000022"], ["MAIL", "k@beispiel.de"]] as const;
     for (const [channel, contact] of channels) {
-      const o = await createOrder(env, owner);
+      const o = await createOrder(env, owner, { item: "Kosten", customerEmail: "intake@beispiel.de" }); // intake mail is free
       await env.pub("POST", `${PUB}/orders/${o.code}/subscribe`, { channel, contact, consent: true });
       await setStatus(env, owner, o.id, "ABHOLBEREIT");
     }
     const now = await messages(env, owner);
-    expect(now.monthCount).toBe(start.monthCount + 3);
+    expect(now.monthCount).toBe(start.monthCount + 6); // three intake mails (free) and three ready messages
     expect(now.monthTotalEur).toBe(0.075 + 0.075 + 0.0456); // 0.1956
-    const costs = now.messages.slice(0, 3).map((m: any) => [m.channel, m.costEur]);
+    const costs = now.messages.filter((m: any) => m.type === "ABHOLBEREIT").map((m: any) => [m.channel, m.costEur]);
     expect(costs).toEqual(expect.arrayContaining([["SMS", 0.075], ["WHATSAPP", 0.0456], ["MAIL", 0]]));
     expect(now.messages[0].recipientMasked).toMatch(/\*\*\*/);
     expect(now.perOrder.every((p: any) => p.count >= 1)).toBe(true);

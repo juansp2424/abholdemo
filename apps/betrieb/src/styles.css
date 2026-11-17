@@ -351,3 +351,14 @@ textarea { resize: vertical; }
   :root { --sep: rgba(60, 60, 67, 0.7); --label-2: #3a3a3c; --blue-text: #0040dd; }
   .card, .order-list, .summary-box { outline: 1px solid var(--sep); }
 }
+
+/* Tag for one order (print: cut out and attach) */
+.tag-card { display: flex; align-items: center; gap: 16px; width: min(100mm, 100%); padding: 10px; background: #fff; color: #000; border: 1.5px dashed #000; border-radius: 12px; }
+.tag-qr { flex: none; width: 36mm; height: 36mm; max-width: 40%; image-rendering: pixelated; }
+.tag-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.tag-text p { margin: 0; }
+.tag-biz { font-weight: 600; font-size: 13px; font-family: Futura, "Futura PT", "Century Gothic", "Avenir Next", "Trebuchet MS", sans-serif; }
+.tag-label { font-size: 11px; }
+.tag-code { font-family: var(--mono); font-weight: 700; font-size: 26px; letter-spacing: 0.06em; line-height: 1.15; }
+.tag-hint { font-size: 10.5px; line-height: 1.25; margin-top: 4px; }
+@media print { .tag-card { border-radius: 0; } }

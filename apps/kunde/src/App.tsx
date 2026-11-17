@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { CentralStart, CentralStatus } from "./pages/Central";
 import { StartPage } from "./pages/StartPage";
 import { StatusPage } from "./pages/StatusPage";
 
@@ -43,14 +44,11 @@ export function App() {
     page = <StatusPage key={`${parts[1]}/${parts[3]}`} web={parts[1]} code={decodeURIComponent(parts[3])} abmelden={abmelden} />;
   } else if (parts[0] === "b" && parts[1]) {
     page = <StartPage key={parts[1]} web={parts[1]} />;
+  } else if (parts[0] === "a" && parts[1]) {
+    const abmelden = new URLSearchParams(search).get("abmelden") === "1";
+    page = <CentralStatus key={parts[1]} code={decodeURIComponent(parts[1])} abmelden={abmelden} />;
   } else {
-    page = (
-      <main className="page">
-        <h1>Auftrag abholen</h1>
-        <p>Hier sehen Sie den Stand Ihres Auftrags. Es gibt in dieser Demo einen Betrieb.</p>
-        <Link to="/b/werkstatt-demo" className="btn">Zum Betrieb Werkstatt Demo</Link>
-      </main>
-    );
+    page = <CentralStart />;
   }
   return page;
 }

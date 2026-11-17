@@ -1,8 +1,11 @@
 import type {
   ApiError,
   BookSlotRequest,
+  CentralOrderView,
   Channel,
   ErrorCode,
+  LookupRequest,
+  LookupResponse,
   PublicBusiness,
   PublicOrderView,
   PublicSlotsResponse,
@@ -63,3 +66,9 @@ export const bookSlot = (web: string, code: string, start: string) =>
   call<PublicOrderView>("PUT", `${ord(web, code)}/slot`, { start } satisfies BookSlotRequest);
 export const cancelSlot = (web: string, code: string) =>
   call<PublicOrderView>("DELETE", `${ord(web, code)}/slot`);
+
+/** Central page: the code alone finds the business. */
+export const getCentral = (code: string) => call<CentralOrderView>("GET", `/api/public/orders/${encodeURIComponent(code)}`);
+/** Central entry by hand: code plus the last digits of the phone number (sent in the body, never in the URL). */
+export const lookupOrder = (code: string, phoneEnd: string) =>
+  call<LookupResponse>("POST", "/api/public/lookup", { code, phoneEnd } satisfies LookupRequest);

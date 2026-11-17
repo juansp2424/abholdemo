@@ -63,6 +63,9 @@ function Body(props: {
           <p className="detail-item">{o.item}</p>
           <StatusBadge status={o.status} /> <span className="muted">{o.ageDays === 1 ? "1 Tag alt" : `${o.ageDays} Tage alt`}</span>
         </div>
+        <a className="btn btn-secondary" href={`#/anhaenger/${o.id}`}>
+          Anhänger drucken
+        </a>
       </section>
 
       <Alert message={actionError} />

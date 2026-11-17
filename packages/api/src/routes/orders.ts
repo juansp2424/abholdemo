@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import {
-  businessUrl,
+  centralUrl,
+  contactChannel,
   normalizeCode,
   MANUAL_TRANSITIONS,
   ORDER_STATUSES,
@@ -32,7 +33,7 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
 
   app.get("/api/betrieb/business", async (): Promise<BusinessInfo> => {
     const s = db().settings;
-    return { name: s.name, webname: s.webname, logoDataUrl: s.logoDataUrl, customerUrl: businessUrl(s.webname), quickCategories: s.quickCategories ?? [] };
+    return { name: s.name, webname: s.webname, logoDataUrl: s.logoDataUrl, customerUrl: centralUrl(), quickCategories: s.quickCategories ?? [] };
   });
 
   app.get("/api/betrieb/orders", async (req): Promise<OrderSummary[]> => {
@@ -121,8 +122,9 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
     logStatus(order, now, null, "ANGENOMMEN", actor);
     if (photo) ctx.store.photos.save(order.id, photo.mime, photo.data);
     d.orders.push(order);
-    // R27: status link by mail when staff captured an address (simulated, free)
-    if (customerEmail) addMessage(d, order, "STATUSLINK", "MAIL", customerEmail, now);
+    // R27: status link right at intake: mail if an address was captured, else SMS to the phone number (simulated)
+    const linkChannel = contactChannel(customerEmail, customerPhone)!; // the phone number is required
+    addMessage(d, order, "STATUSLINK", linkChannel, linkChannel === "MAIL" ? customerEmail! : customerPhone!, now);
     reply.code(201);
     return toDetail(d, ctx.store.photos, order, now);
   });

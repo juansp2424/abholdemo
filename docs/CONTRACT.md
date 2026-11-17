@@ -49,12 +49,12 @@ Customer input is normalized with `normalizeCode` (strip whitespace, uppercase) 
 
 | Type | When | Recipient | Channel | Cost |
 |---|---|---|---|---|
-| `STATUSLINK` | order created with `customerEmail` | intake email | `MAIL` | 0 |
+| `STATUSLINK` | every order at intake | intake email if captured (`MAIL`, free), else the required phone number (`SMS`) | `contactChannel()` | per channel |
 | `ABHOLBEREIT` | status set to `ABHOLBEREIT`, active subscription | subscription contact | subscription channel | per channel |
 | `ERINNERUNG` | sweep marks `UEBERFAELLIG`, active subscription | subscription contact | subscription channel | per channel |
 | `MITTEILUNG` | staff sends a free text (`POST /api/betrieb/orders/:id/notify`) | intake contact | `MAIL` if an email was captured at intake, else `SMS` to the phone number | per channel |
 
-Texts (server builds them, `{link}` = `statusUrl(webname, code)`):
+Texts (server builds them, `{link}` = `orderUrl(code)`, the central page `{central}/a/{code}`):
 
 * `STATUSLINK`: `Guten Tag, Ihr Auftrag {nummer} bei {betrieb} ist angenommen. Den Stand sehen Sie hier: {link}`
 * `ABHOLBEREIT`: `settings.messageTemplate` with placeholders replaced.
@@ -143,6 +143,14 @@ Owner only (`INHABER`), else `403 FORBIDDEN` "Nur für Inhaber.": settings and s
 
 ### 6.7 Public (customer website, no auth, no cookies)
 
+Central page (one address for all businesses, the code alone identifies the business, so codes are unique across all businesses):
+
+`GET /api/public/orders/:code` → `CentralOrderView` `{ business: PublicBusiness, order: PublicOrderView }`; neutral 404, rate limited, min 300 ms like the business scoped lookup. Used by `{central}/a/{code}` (links in messages, QR code on the tag).
+
+`POST /api/public/lookup` body `LookupRequest` `{ code, phoneEnd }` → `200 LookupResponse` `{ code }` (normalized). `phoneEnd` is the last 4 digits of the order's phone number (spaces ignored). Wrong code, wrong digits, missing or malformed input all give the same neutral `404` body and count as failed tries towards the lock. Personal data is sent in the body, never in a URL. Limit: this only guards the manual entry; the link `{central}/a/{code}` works without the digits, like a parcel tracking link (see PLAN section 13).
+
+Business scoped (kept, e.g. for businesses that print their own stand):
+
 `GET /api/public/b/:webname` → `PublicBusiness` or `404 NOT_FOUND` "Diesen Betrieb gibt es nicht."
 
 `GET /api/public/b/:webname/orders/:code` → `PublicOrderView`, neutral 404, rate limited, min 300 ms.
@@ -178,7 +186,7 @@ Orders relative to seed time (all names and contacts invented, domains `beispiel
 
 | Code | Status | Notes |
 |---|---|---|
-| `H7RT3K` | ANGENOMMEN | today, Auto Winterreifen aufziehen, Petra Beispiel, intake email, STATUSLINK message |
+| `H7RT3K` | ANGENOMMEN | today, Auto Winterreifen aufziehen, Petra Beispiel, intake email, STATUSLINK message (seed orders without a phone get `+49 151 000000NN` with NN = 10 + creation index, e.g. D3FY6W ends in 0012) |
 | `N4WZ8P` | ANGENOMMEN | 1 day, Tasche Naht, no name |
 | `Q9XB2M` | IN_ARBEIT | 2 days, Fahrrad Bremsen einstellen, estimatedCompletion = tomorrow, subscription MAIL |
 | `C6VJ5T` | IN_ARBEIT | 4 days, Auto Klimaanlage prüfen, Klaus Muster |

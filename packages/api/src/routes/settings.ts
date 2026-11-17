@@ -14,7 +14,7 @@ import {
 import type { Ctx } from "../context.js";
 import { renderTemplate, unsubscribeSuffix } from "../messages.js";
 import { fitsOpeningHours } from "../slots.js";
-import { statusUrl } from "@abholdemo/shared";
+import { orderUrl } from "@abholdemo/shared";
 import { ownerOnly } from "../guards.js";
 import { hashPassword } from "../password.js";
 import type { UserRec } from "../types.js";
@@ -137,7 +137,7 @@ export function settingsRoutes(app: FastifyInstance, ctx: Ctx) {
     const template = asObject(req.body).template;
     if (typeof template !== "string") return invalid("Bitte geben Sie einen Nachrichtentext an.");
     const s = db().settings;
-    const link = statusUrl(s.webname, "ABC234");
+    const link = orderUrl("ABC234");
     return { text: renderTemplate(template, { betrieb: s.name, nummer: "ABC234", link }) + unsubscribeSuffix("MAIL", link) };
   });
 

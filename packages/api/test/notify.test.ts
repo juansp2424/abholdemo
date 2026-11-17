@@ -43,7 +43,7 @@ describe("staff message to the customer", () => {
     expect(r.json.text).toContain("Ersatzteil ist noch nicht da. Den Stand");
     const overview = (await env.api(t, "GET", "/api/betrieb/messages")).json;
     expect(overview.messages.find((m: any) => m.id === r.json.id)).toBeTruthy();
-    expect(overview.perOrder.find((p: any) => p.orderCode === o.code).count).toBe(1);
+    expect(overview.perOrder.find((p: any) => p.orderCode === o.code).count).toBe(2); // status link SMS at intake and this message
   });
 
   it("works without any subscription, can be sent repeatedly, and does not use up the one ready message", async () => {
@@ -94,5 +94,51 @@ describe("staff message to the customer", () => {
     // STOP replies only exist for messages the customer ordered
     const stop = await env.api(t, "POST", `/api/betrieb/messages/${sent.json.id}/simulate-stop`);
     expect(stop.status).toBe(409);
+  });
+});
+
+describe("central customer page", () => {
+  it("finds the order by code alone, with the business branding, and links in messages are central", async () => {
+    const env = makeEnv();
+    const t = await env.token();
+    const o = await createOrder(env, t, { item: "Rad", customerPhone: "+49 151 00004711" });
+    const r = await env.pub("GET", `/api/public/orders/${o.code.toLowerCase()}`);
+    expect(r.status).toBe(200);
+    expect(r.json.business).toMatchObject({ name: "Werkstatt Demo", webname: "werkstatt-demo" });
+    expect(r.json.order).toMatchObject({ code: o.code, status: "ANGENOMMEN" });
+    expect(r.body).not.toContain("00004711");
+    expect(r.body).not.toContain("Rad");
+    expect(o.statusUrl).toBe(`http://localhost:5174/a/${o.code}`);
+    expect(env.db().messages.find((m) => m.orderId === o.id)).toMatchObject({ type: "STATUSLINK", channel: "SMS", link: `http://localhost:5174/a/${o.code}` });
+  });
+
+  it("the entry by hand needs the last 4 digits of the phone number and answers every failure the same", async () => {
+    const env = makeEnv();
+    const t = await env.token();
+    const o = await createOrder(env, t, { item: "Rad", customerPhone: "+49 151 00004711" });
+    const lookup = (body: unknown) => env.pub("POST", "/api/public/lookup", body);
+    const ok = await lookup({ code: ` ${o.code.slice(0, 3).toLowerCase()} ${o.code.slice(3)} `, phoneEnd: "4711" });
+    expect(ok.status).toBe(200);
+    expect(ok.json).toEqual({ code: o.code });
+    expect((await lookup({ code: o.code, phoneEnd: "47 11" })).status).toBe(200); // spaces are ignored
+    const wrongPin = await lookup({ code: o.code, phoneEnd: "0000" });
+    const wrongCode = await lookup({ code: "ZZZZZZ", phoneEnd: "4711" });
+    const malformed = await lookup({ code: "x", phoneEnd: "4711" });
+    const noPin = await lookup({ code: o.code });
+    const shortPin = await lookup({ code: o.code, phoneEnd: "11" });
+    for (const r of [wrongPin, wrongCode, malformed, noPin, shortPin]) {
+      expect(r.status).toBe(404);
+      expect(r.body).toBe(wrongCode.body); // no hint whether the code or the digits were wrong
+    }
+  });
+
+  it("failed tries at the central entry count towards the lock", async () => {
+    const env = makeEnv();
+    const t = await env.token();
+    const o = await createOrder(env, t, { item: "Rad", customerPhone: "+49 151 00004711" });
+    for (let i = 0; i < 10; i++) expect((await env.pub("POST", "/api/public/lookup", { code: o.code, phoneEnd: "0000" })).status).toBe(404);
+    const locked = await env.pub("POST", "/api/public/lookup", { code: o.code, phoneEnd: "4711" });
+    expect(locked.status).toBe(429); // even the right digits are refused during the lock
+    expect((await env.pub("GET", `/api/public/orders/${o.code}`)).status).toBe(429);
   });
 });

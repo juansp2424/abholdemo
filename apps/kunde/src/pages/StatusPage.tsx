@@ -7,7 +7,7 @@ import { FALLBACK_HINT, PRIVACY_TEXT } from "../texts";
 import { SlotSection } from "./SlotSection";
 import { SubscribeSection } from "./SubscribeSection";
 
-export function StatusPage({ web, code, abmelden }: { web: string; code: string; abmelden: boolean }) {
+export function StatusPage({ web, code, abmelden, central = false }: { web: string; code: string; abmelden: boolean; central?: boolean }) {
   const [biz, setBiz] = useState<PublicBusiness | null>(null);
   const [order, setOrder] = useState<PublicOrderView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export function StatusPage({ web, code, abmelden }: { web: string; code: string;
   const [unsubDone, setUnsubDone] = useState(false);
   const [unsubError, setUnsubError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const startLink = `/b/${encodeURIComponent(web)}`;
+  const startLink = central ? "/" : `/b/${encodeURIComponent(web)}`;
 
   useEffect(() => {
     getBusiness(web).then(setBiz, () => undefined);

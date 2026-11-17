@@ -9,6 +9,7 @@ import { OrderList } from "./screens/OrderList";
 import { NewOrder } from "./screens/NewOrder";
 import { OrderDetailScreen } from "./screens/OrderDetail";
 import { Calendar } from "./screens/Calendar";
+import { Tag } from "./screens/Tag";
 import { Messages } from "./screens/Messages";
 import { Poster } from "./screens/Poster";
 import { Settings } from "./screens/Settings";
@@ -129,11 +130,12 @@ function Shell({ user, onLogout }: { user: StaffUser; onLogout: () => void }) {
   }, [route, refreshClock]);
 
   const items = NAV.filter((n) => !n.ownerOnly || isOwner);
-  const active = items.find((n) => route === n.path || (n.path === "/auftraege" && route.startsWith("/auftrag/")));
+  const active = items.find((n) => route === n.path || (n.path === "/auftraege" && (route.startsWith("/auftrag/") || route.startsWith("/anhaenger/"))));
 
   let screen;
   if (route === "/neu") screen = <NewOrder />;
   else if (route.startsWith("/auftrag/")) screen = <OrderDetailScreen id={route.slice("/auftrag/".length)} />;
+  else if (route.startsWith("/anhaenger/")) screen = <Tag id={route.slice("/anhaenger/".length)} />;
   else if (route === "/kalender") screen = <Calendar />;
   else if (route === "/nachrichten") screen = <Messages />;
   else if (route === "/aufsteller") screen = <Poster />;

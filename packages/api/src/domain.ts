@@ -5,7 +5,7 @@ import {
   STATUS_CUSTOMER_TEXT,
   STATUS_LABELS,
   SUBSCRIBE_STATUSES,
-  statusUrl,
+  orderUrl,
   type Channel,
   type MessageType,
   type MessageView,
@@ -52,7 +52,7 @@ export function addMessage(
     channel,
     recipient,
     text: buildMessageText(type, order.code, channel, db.settings, freeText),
-    link: statusUrl(db.settings.webname, order.code),
+    link: orderUrl(order.code),
     deliveryStatus: "ZUGESTELLT_SIMULIERT",
     costEur: costFor(channel),
     createdAt: iso(atMs),
@@ -165,7 +165,7 @@ export function toDetail(db: Db, photos: PhotoStore, o: OrderRec, nowMs: number)
     consentLog: o.consentLog,
     messageCount: db.messages.filter((m) => m.orderId === o.id).length,
     allowedTransitions: MANUAL_TRANSITIONS[o.status],
-    statusUrl: statusUrl(db.settings.webname, o.code),
+    statusUrl: orderUrl(o.code),
   };
 }
 

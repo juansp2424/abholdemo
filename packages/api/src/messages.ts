@@ -1,4 +1,4 @@
-import { CHANNEL_COST_EUR, statusUrl, type BusinessSettings, type Channel, type MessageType } from "@abholdemo/shared";
+import { CHANNEL_COST_EUR, orderUrl, type BusinessSettings, type Channel, type MessageType } from "@abholdemo/shared";
 
 /** p***@beispiel.de, +49 *** ****12 */
 export function maskContact(channel: Channel, contact: string): string {
@@ -33,7 +33,7 @@ export function buildMessageText(
   settings: Pick<BusinessSettings, "name" | "webname" | "messageTemplate">,
   freeText = "",
 ): string {
-  const link = statusUrl(settings.webname, code);
+  const link = orderUrl(code);
   const vars = { betrieb: settings.name, nummer: code, link };
   switch (type) {
     case "STATUSLINK":

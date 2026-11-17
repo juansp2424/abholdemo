@@ -35,6 +35,14 @@ function slotsOfDay(settings: Pick<BusinessSettings, "openingHours" | "slotLengt
   return slots;
 }
 
+/** True when [startIso, endIso] is exactly one slot generated from the opening hours and slot length. */
+export function fitsOpeningHours(settings: Pick<BusinessSettings, "openingHours" | "slotLengthMinutes">, startIso: string, endIso: string): boolean {
+  const start = Date.parse(startIso);
+  const end = Date.parse(endIso);
+  const d = new Date(start);
+  return slotsOfDay(settings, d.getFullYear(), d.getMonth(), d.getDate()).some((s) => s.start === start && s.end === end);
+}
+
 /** Most recent slot that is already over (end <= now): today first, then back up to 14 days. */
 export function lastPastSlot(settings: Pick<BusinessSettings, "openingHours" | "slotLengthMinutes">, nowMs: number): RawSlot | null {
   const t = new Date(nowMs);

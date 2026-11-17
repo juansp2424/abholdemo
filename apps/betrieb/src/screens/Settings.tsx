@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { CHANNEL_LABELS, QUICK_CATEGORY_MAX_COUNT, QUICK_CATEGORY_MAX_LENGTH, SLOT_LENGTH_OPTIONS, WEEKDAYS, WEEKDAY_LABELS } from "@abholdemo/shared";
-import type { BusinessSettings, Channel, SlotLengthMinutes, TimeInterval, Weekday } from "@abholdemo/shared";
+import type { BusinessSettings, Channel, SaveSettingsResponse, SlotLengthMinutes, TimeInterval, Weekday } from "@abholdemo/shared";
 import { api, errorMessage } from "../api";
 import { resizeImage } from "../image";
 import { Alert, PageHeader, useApp, useDebounced, useLoad } from "../ui";
@@ -82,10 +82,11 @@ function SettingsForm({ initial }: { initial: BusinessSettings }) {
     setSaving(true);
     setMsg(null);
     try {
-      const saved = await api<BusinessSettings>("PUT", "/api/betrieb/settings", s);
+      const { releasedBookings, ...saved } = await api<SaveSettingsResponse>("PUT", "/api/betrieb/settings", s);
       setS(saved);
       refreshBusiness();
-      setMsg({ kind: "success", text: "Die Einstellungen wurden gespeichert." });
+      const note = releasedBookings > 0 ? ` ${releasedBookings === 1 ? "Eine gebuchte Abholzeit passte" : `${releasedBookings} gebuchte Abholzeiten passten`} nicht mehr zu den Öffnungszeiten und ${releasedBookings === 1 ? "wurde" : "wurden"} freigegeben. Die Kunden können auf der Statusseite eine neue Zeit wählen.` : "";
+      setMsg({ kind: "success", text: `Die Einstellungen wurden gespeichert.${note}` });
     } catch (err) {
       setMsg({ kind: "error", text: errorMessage(err) });
     } finally {

@@ -129,7 +129,7 @@ Owner only (`INHABER`), else `403 FORBIDDEN` "Nur für Inhaber.": settings and s
 `BusinessSettings.quickCategories` (string[]): the quick selection chips for new orders. Empty by default, nothing is predefined. Owner defined, max 20 entries of 1 to 40 chars, trimmed, duplicates (case insensitive) rejected with 400. If the field is missing in a PUT the current list is kept. `GET /api/betrieb/business` returns the same list (`BusinessInfo.quickCategories`) so every staff member sees the chips.
 
 
-`GET /api/betrieb/settings` → `BusinessSettings`. `PUT /api/betrieb/settings` body `BusinessSettings` (webname ignored) → `200 BusinessSettings` or `400 VALIDATION`.
+`GET /api/betrieb/settings` → `BusinessSettings`. `PUT /api/betrieb/settings` body `BusinessSettings` (webname ignored) → `200 SaveSettingsResponse` (the saved settings plus `releasedBookings`) or `400 VALIDATION`. Pickup slots always follow the opening hours: bookings are only accepted for generated slots, and on save every upcoming, active booking that is no longer exactly one generated slot (hours or slot length changed) is removed, as if the customer had cancelled. The customer sees the slot selection again, no message is sent. Past bookings and picked up orders are untouched.
 `POST /api/betrieb/settings/preview` body `{ "template": string }` → `{ "text": string }` (rendered with sample code `ABC234` and the business name, plus the MAIL suffix).
 
 `GET /api/betrieb/staff` → `StaffUser[]`. `POST /api/betrieb/staff` body `CreateStaffRequest` → `201 StaffUser` (`400` if username taken). `PATCH /api/betrieb/staff/:id` body `UpdateStaffRequest` → `StaffUser`. An owner cannot deactivate themselves or remove the last active owner (`409 NOT_ALLOWED`).

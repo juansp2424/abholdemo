@@ -309,7 +309,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .cal-lanes { position: relative; min-width: calc(var(--lanes) * var(--lane-min)); border-left: 1px solid var(--border);
   background-image: linear-gradient(to bottom, #d0dcf0 1px, transparent 1px), linear-gradient(to bottom, #e8f0fe 1px, transparent 1px);
   background-size: 100% var(--hp), 100% calc(var(--hp) / 2); }
-.cal-closed { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, rgba(100, 116, 139, .10) 0 8px, rgba(100, 116, 139, .04) 8px 16px); pointer-events: none; }
 .cal-now { position: absolute; left: 0; right: 0; height: 0; border-top: 2px solid #dc2626; z-index: 3; pointer-events: none; }
 .cal-now::before { content: ""; position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: #dc2626; }
 .cal-bar { position: absolute; z-index: 2; left: calc(var(--lane) * 100% / var(--lanes) + 3px); width: calc(100% / var(--lanes) - 6px); display: flex; flex-direction: column; justify-content: center; gap: 0; padding: 2px 10px; overflow: hidden;

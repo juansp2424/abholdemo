@@ -29,7 +29,7 @@ Siehe `docs/CONTRACT.md` und `packages/shared/src/index.ts`. Nur der Orchestrato
 3. Neuer Auftrag: Gegenstand (Freitext + Schnellauswahl), aufklappbar "Mehr Angaben" (Foto, Name, Mail, Handy, geplantes Abholdatum, voraussichtliche Fertigstellung); Speichern
 4. Auftrag gespeichert: Auftragsnummer sehr groß, Knopf "Nächster Auftrag"
 5. Auftragsdetail: Status, großer Knopf "Abholbereit", weitere Knöpfe In Arbeit, Abgeholt, Storniert, Foto, Kontakt, Benachrichtigung und Zustimmungsprotokoll, Slot, Statusprotokoll
-6. Kalender: Tageskalender mit Zeitachse (nur Öffnungszeiten, Mittagspause schraffiert). Abholungen als Balken mit Auftragsnummer, parallele Abholungen im selben Slot nebeneinander (Kalender wird breiter, seitlich scrollbar). Oben "Voraussichtlich fertig" für Aufträge mit Fertigstellung an diesem Tag. Tag vor und zurück, Datum wählen, Balken antippen zeigt Details mit "Abgeholt" und "Zum Auftrag". Rote Linie für die Demo Uhrzeit.
+6. Kalender: Tageskalender mit Zeitachse (reicht von der ersten Öffnung bis zur letzten Schließung, Pausen werden nicht eingezeichnet). Abholungen als Balken mit Auftragsnummer, parallele Abholungen im selben Slot nebeneinander (Kalender wird breiter, seitlich scrollbar). Oben "Voraussichtlich fertig" für Aufträge mit Fertigstellung an diesem Tag. Tag vor und zurück, Datum wählen, Balken antippen zeigt Details mit "Abgeholt" und "Zum Auftrag". Rote Linie für die Demo Uhrzeit.
 7. Nachrichten: Liste der simulierten Nachrichten, Monatssumme, Zahl pro Auftrag, Demo Knopf "STOP Antwort simulieren"
 8. Aufsteller: QR Code, Webname, A5 Druckvorlage, Knopf "Drucken"
 9. Einstellungen (nur Inhaber)
@@ -153,3 +153,9 @@ Neue Vorgabe des Auftraggebers, ersetzt den Schuhmacher Bezug aus dem Ursprungsp
 * Menüpunkt und Route heißen jetzt Kalender (`#/kalender`). Der Endpunkt `GET /api/betrieb/day-slots` liefert zusätzlich `completions` (Aufträge mit voraussichtlicher Fertigstellung an diesem Datum, ohne Stornierte, nach Nummer sortiert) und `openingHours` (Öffnungszeiten des Wochentags für die Zeitachse).
 * Fertigstellung ist nur ein Datum ohne Uhrzeit und steht deshalb als Liste oberhalb der Zeitachse, nicht als Balken.
 * Die Zeitachse zeigt die Öffnungszeiten, bei Abholungen außerhalb davon wird sie erweitert.
+
+## 10. Abholzeiten richten sich zwingend nach den Öffnungszeiten (2026-11-17)
+
+* Beim Buchen war das schon gewährleistet: nur vom Backend aus Öffnungszeiten und Slotlänge erzeugte Zeiten werden angenommen (alles andere ist `SLOT_INVALID`, auch Mittagspause, vor Öffnung, nach Schließung, Sonntag, krumme Minuten).
+* Lücke geschlossen: Ändert der Inhaber Öffnungszeiten oder Slotlänge, werden zukünftige aktive Buchungen, die nicht mehr genau einem erzeugten Slot entsprechen, entfernt. Die Einstellungen melden die Zahl (`releasedBookings`) und zeigen sie dem Inhaber. Die betroffenen Kunden bekommen keine Nachricht (R25: nur eine Nachricht pro Auftrag), sie sehen beim nächsten Aufruf der Statusseite wieder die Slot Auswahl.
+* Nicht geändert: Verringert der Inhaber nur die Kapazität pro Slot, bleiben bestehende Buchungen bestehen.

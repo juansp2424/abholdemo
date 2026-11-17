@@ -75,18 +75,10 @@ export function Calendar() {
     for (const e of data.entries) marks.push(minutesOf(e.start), minutesOf(e.end) || 24 * 60);
     const from = marks.length ? Math.floor(Math.min(...marks) / 60) * 60 : 8 * 60;
     const to = marks.length ? Math.max(from + 60, Math.ceil(Math.max(...marks) / 60) * 60) : 18 * 60;
-    // Shade the times when the business is closed
-    const closed: { from: number; to: number }[] = [];
-    let cursor = from;
-    for (const iv of [...data.openingHours].sort((a, b) => hm(a.open) - hm(b.open))) {
-      if (hm(iv.open) > cursor) closed.push({ from: cursor, to: hm(iv.open) });
-      cursor = Math.max(cursor, hm(iv.close));
-    }
-    if (cursor < to) closed.push({ from: cursor, to });
     const { placed, lanes } = layout(data.entries, from);
     const hours: number[] = [];
     for (let m = from; m <= to; m += 60) hours.push(m);
-    return { from, to, closed, placed, lanes, hours };
+    return { from, to, placed, lanes, hours };
   }, [data]);
 
   const todayStr = clock ? toDayString(new Date(clock.now)) : null;
@@ -149,9 +141,6 @@ export function Calendar() {
                 ))}
               </div>
               <div className="cal-lanes" style={{ height: gridHeight }}>
-                {view.closed.map((c) => (
-                  <div key={`${c.from}-${c.to}`} className="cal-closed" style={{ top: px(c.from - view.from), height: px(c.to - c.from) }} aria-hidden="true" />
-                ))}
                 {showNow ? <div className="cal-now" style={{ top: px(nowMin - view.from) }} aria-hidden="true" /> : null}
                 {view.placed.map(({ entry, lane, top, height }) => {
                   const key = `${entry.orderId}-${entry.start}`;

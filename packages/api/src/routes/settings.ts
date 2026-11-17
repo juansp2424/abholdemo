@@ -13,6 +13,7 @@ import {
 } from "@abholdemo/shared";
 import type { Ctx } from "../context.js";
 import { renderTemplate, unsubscribeSuffix } from "../messages.js";
+import { fitsOpeningHours } from "../slots.js";
 import { statusUrl } from "@abholdemo/shared";
 import { ownerOnly } from "../guards.js";
 import { hashPassword } from "../password.js";
@@ -119,7 +120,17 @@ export function settingsRoutes(app: FastifyInstance, ctx: Ctx) {
 
   app.put("/api/betrieb/settings", guard, async (req) => {
     db().settings = parseSettings(req.body, db().settings.webname, db().settings);
-    return db().settings;
+    // Pickup slots must always follow the opening hours: drop upcoming bookings that no longer fit.
+    const now = ctx.now();
+    let releasedBookings = 0;
+    for (const o of db().orders) {
+      const b = o.booking;
+      if (b && !b.released && Date.parse(b.start) > now && !fitsOpeningHours(db().settings, b.start, b.end)) {
+        o.booking = null;
+        releasedBookings++;
+      }
+    }
+    return { ...db().settings, releasedBookings };
   });
 
   app.post("/api/betrieb/settings/preview", guard, async (req) => {

@@ -123,3 +123,48 @@ describe("slot booking", () => {
     expect(seedEntry(day.json).attendance).toBe("NICHT_ERSCHIENEN");
   });
 });
+
+describe("slots follow the opening hours", () => {
+  it("never books the lunch break, before opening or after closing", async () => {
+    const { mk, book } = await setup(2);
+    const a = await mk();
+    // Thursday 2026-11-12: open 09:00 to 13:00 and 14:00 to 18:00
+    for (const [h, m] of [[13, 0], [13, 30], [8, 45], [18, 0], [18, 15]]) {
+      expect((await book(a.code, new Date(2026, 10, 12, h, m).toISOString())).json.error.code).toBe("SLOT_INVALID");
+    }
+    expect((await book(a.code, new Date(2026, 10, 12, 12, 45).toISOString())).status).toBe(200); // last slot before the break
+    expect((await book(a.code, new Date(2026, 10, 12, 14, 0).toISOString())).status).toBe(200); // first slot after the break
+  });
+
+  it("releases upcoming bookings that no longer fit after the owner changes the hours, keeps the others", async () => {
+    const { env, owner, mk, book } = await setup(2);
+    const morning = await mk();
+    const afternoon = await mk();
+    expect((await book(morning.code, new Date(2026, 10, 12, 10, 0).toISOString())).status).toBe(200);
+    expect((await book(afternoon.code, new Date(2026, 10, 12, 15, 0).toISOString())).status).toBe(200);
+    const s = env.db().settings;
+    const afternoonOnly = { ...s.openingHours, do: [{ open: "14:00", close: "18:00" }] };
+    const saved = await env.api(owner, "PUT", "/api/betrieb/settings", { ...s, openingHours: afternoonOnly });
+    expect(saved.status).toBe(200);
+    expect(saved.json.releasedBookings).toBe(1);
+    const view = (code: string) => env.pub("GET", `${PUB}/orders/${code}`);
+    expect((await view(morning.code)).json.slot).toBeNull();
+    expect((await view(afternoon.code)).json.slot).not.toBeNull();
+    // A slot length that no longer matches the booked start is dropped as well
+    const again = await env.api(owner, "PUT", "/api/betrieb/settings", { ...env.db().settings, slotLengthMinutes: 45 });
+    expect(again.json.releasedBookings).toBeGreaterThanOrEqual(1); // 15:00 is not a 45 minute slot start (14:00, 14:45, 15:30, ...); the seed booking may go too
+    expect((await view(afternoon.code)).json.slot).toBeNull();
+  });
+
+  it("does not touch past bookings or picked up orders", async () => {
+    const { env, owner, mk, book } = await setup(2);
+    const a = await mk();
+    await book(a.code, new Date(2026, 10, 12, 10, 0).toISOString());
+    await setStatus(env, owner, a.id, "ABGEHOLT");
+    env.time.value = new Date(2026, 10, 13, 9, 0).getTime(); // booking is now in the past
+    const s = env.db().settings;
+    const saved = await env.api(owner, "PUT", "/api/betrieb/settings", { ...s, openingHours: { ...s.openingHours, do: [] } });
+    expect(saved.json.releasedBookings).toBe(0);
+    expect(env.db().orders.find((o) => o.code === a.code)?.booking).not.toBeNull();
+  });
+});

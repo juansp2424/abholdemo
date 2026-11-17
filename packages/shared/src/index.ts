@@ -193,6 +193,9 @@ export interface BusinessSettings {
   quickCategories: string[]; // quick selection for new orders, owner defined, empty by default, max 20 entries of 1..40 chars
 }
 
+/** Response of PUT /api/betrieb/settings: the saved settings plus the number of upcoming pickup bookings that no longer fit the opening hours and were removed. */
+export type SaveSettingsResponse = BusinessSettings & { releasedBookings: number };
+
 /** Basic business info for every logged in staff member. */
 export interface BusinessInfo {
   name: string;

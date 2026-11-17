@@ -235,3 +235,46 @@ textarea { resize: vertical; }
   .poster-wrap { width: 148mm; margin: 0; }
   .poster { border: 0; width: 148mm; height: 210mm; aspect-ratio: auto; page-break-after: avoid; }
 }
+
+/* ---------- Apple style refinements (screen only) ----------
+   Instant press feedback, size specific tracking, translucent chrome that content scrolls under,
+   calm depth, reduced motion/transparency/contrast support. */
+:root {
+  --bg: #f5f5f7;
+  --border: #d2d2d7;
+  --radius: 18px;
+  --ease: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+body { font-family: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; letter-spacing: 0.005em; -webkit-font-smoothing: antialiased; font-optical-sizing: auto; -webkit-tap-highlight-color: transparent; }
+h1 { font-size: 2rem; line-height: 1.1; letter-spacing: -0.025em; font-weight: 700; }
+h2 { font-size: 1.4rem; line-height: 1.2; letter-spacing: -0.02em; font-weight: 700; }
+h3 { letter-spacing: -0.01em; }
+@media screen {
+  .topbar { position: sticky; top: 0; z-index: 20; background: rgba(20, 83, 45, 0.88); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid rgba(255, 255, 255, 0.18); }
+  .nav { top: 52px; height: calc(100vh - 52px); background: rgba(255, 255, 255, 0.82); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); }
+  .card { box-shadow: var(--shadow); border-color: transparent; }
+}
+@media (max-width: 767px) {
+  .nav { top: auto; height: auto; border-top: 1px solid var(--border); }
+}
+.nav-item { transition: background-color 120ms var(--ease), transform 120ms var(--ease); }
+.nav-item:active { transform: scale(0.97); }
+.btn, .chip { touch-action: manipulation; transition: transform 120ms var(--ease), background-color 120ms var(--ease), box-shadow 120ms var(--ease); border-radius: 14px; }
+.btn:active:not(:disabled), .chip:active { transform: scale(0.97); }
+.btn-xl { border-radius: 18px; letter-spacing: -0.01em; }
+input, select, textarea { border-radius: 12px; transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 4px rgba(20, 83, 45, 0.18); }
+.huge-code { letter-spacing: 0.08em; }
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+  .btn:active, .chip:active, .nav-item:active { transform: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .topbar { background: var(--brand); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .nav { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .card { border: 2px solid #000; box-shadow: none; }
+  :root { --border: #000; }
+}

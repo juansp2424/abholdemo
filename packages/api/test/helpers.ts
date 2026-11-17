@@ -48,7 +48,7 @@ export const PUB = "/api/public/b/werkstatt-demo";
 
 /** Creates an order via the staff API and returns its detail. */
 export async function createOrder(env: TestEnv, token: string, body: Record<string, unknown> = { item: "Testschuh" }) {
-  const r = await env.api(token, "POST", "/api/betrieb/orders", body);
+  const r = await env.api(token, "POST", "/api/betrieb/orders", { customerPhone: "+49 151 00000099", ...body });
   if (r.status !== 201) throw new Error(`create failed ${r.status} ${r.body}`);
   return r.json as import("@abholdemo/shared").OrderDetail;
 }

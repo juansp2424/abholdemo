@@ -52,6 +52,7 @@ Customer input is normalized with `normalizeCode` (strip whitespace, uppercase) 
 | `STATUSLINK` | order created with `customerEmail` | intake email | `MAIL` | 0 |
 | `ABHOLBEREIT` | status set to `ABHOLBEREIT`, active subscription | subscription contact | subscription channel | per channel |
 | `ERINNERUNG` | sweep marks `UEBERFAELLIG`, active subscription | subscription contact | subscription channel | per channel |
+| `MITTEILUNG` | staff sends a free text (`POST /api/betrieb/orders/:id/notify`) | intake contact | `MAIL` if an email was captured at intake, else `SMS` to the phone number | per channel |
 
 Texts (server builds them, `{link}` = `statusUrl(webname, code)`):
 
@@ -102,7 +103,7 @@ Owner only (`INHABER`), else `403 FORBIDDEN` "Nur für Inhaber.": settings and s
 [{ "id": "o5", "code": "7KP4QX", "item": "Auto, Ölwechsel", "customerName": "Jonas Probe", "status": "ABHOLBEREIT", "ageDays": 6, "createdAt": "2026-11-09T10:00:00.000Z", "slot": { "start": "2026-11-15T14:30:00.000Z", "end": "2026-11-15T14:45:00.000Z" }, "hasPhoto": false, "notify": true }]
 ```
 
-`POST /api/betrieb/orders` body `CreateOrderRequest` → `201 OrderDetail`. Only `item` is required. Validation errors → `400 VALIDATION` with a German message naming the field. Email: simple `x@y.z` check. Phone: digits, spaces, leading `+`, 6 to 20 digits. Photo saved as a file in `packages/api/data/photos/<orderId>.<ext>`.
+`POST /api/betrieb/orders` body `CreateOrderRequest` → `201 OrderDetail`. Only `item` and `customerPhone` are required (without a phone number: `400 VALIDATION` "Bitte geben Sie die Telefonnummer des Kunden an. ..."). Validation errors → `400 VALIDATION` with a German message naming the field. Email: simple `x@y.z` check. Phone: digits, spaces, leading `+`, 6 to 20 digits. Photo saved as a file in `packages/api/data/photos/<orderId>.<ext>`.
 
 `GET /api/betrieb/orders/:id` → `OrderDetail` (includes `photoDataUrl`, `log`, `subscription`, `consentLog`). Unknown → `404 NOT_FOUND` "Auftrag nicht gefunden."
 
@@ -123,6 +124,8 @@ Owner only (`INHABER`), else `403 FORBIDDEN` "Nur für Inhaber.": settings and s
 ```
 
 `POST /api/betrieb/messages/:id/simulate-stop` (demo, SMS or WhatsApp only, else `409 NOT_ALLOWED`) → `200 MessageView`. Revokes the order's subscription with source `STOP`, appends a `WIDERRUF` consent event.
+
+`POST /api/betrieb/orders/:id/notify` body `NotifyRequest` `{ "text": string }` (1 to 500 chars) → `201 MessageView` with `type: "MITTEILUNG"`. For delays, e.g. a part must be ordered. Any logged in staff. The recipient is the intake contact: `customerEmail` if set (channel `MAIL`), else `customerPhone` (channel `SMS`); `contactChannel()` in shared. No subscription or consent from the customer site is needed, and it does not use up the one `ABHOLBEREIT` message. Text: `Mitteilung zu Ihrem Auftrag {nummer} von {betrieb}: {text} Den Stand sehen Sie hier: {link}` (no suffix, never the item, name or photo). Errors: `400 VALIDATION` empty or too long text, `404` unknown order, `409 NOT_ALLOWED` for `ABGEHOLT` or `STORNIERT` orders or when neither email nor phone is stored (only possible for old data). `simulate-stop` returns `409` for `MITTEILUNG` and `STATUSLINK` (STOP only exists for messages the customer ordered).
 
 ### 6.5 Settings and staff (owner only)
 

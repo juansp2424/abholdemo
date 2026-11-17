@@ -123,14 +123,27 @@ export const CHANNEL_COST_EUR: Record<Channel, number> = {
  * STATUSLINK: mail at intake when staff captured an email (R27, free).
  * ABHOLBEREIT: the one ready message to subscribed customers (R25).
  * ERINNERUNG: one reminder after the pickup deadline, subscribed customers only (R28).
+ * MITTEILUNG: free text from staff to the customer's intake contact, e.g. when a repair is delayed because parts must be ordered.
  */
-export type MessageType = "STATUSLINK" | "ABHOLBEREIT" | "ERINNERUNG";
+export type MessageType = "STATUSLINK" | "ABHOLBEREIT" | "ERINNERUNG" | "MITTEILUNG";
 
 export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   STATUSLINK: "Statuslink",
   ABHOLBEREIT: "Abholbereit",
   ERINNERUNG: "Erinnerung",
+  MITTEILUNG: "Mitteilung",
 };
+
+/** Channel for a staff message to the intake contact: mail if an email was captured, otherwise SMS to the phone number. */
+export function contactChannel(email: string | null, phone: string | null): Channel | null {
+  return email ? "MAIL" : phone ? "SMS" : null;
+}
+
+export const NOTIFY_MAX_LENGTH = 500;
+
+export interface NotifyRequest {
+  text: string; // 1..500 chars, plain text
+}
 
 export type DeliveryStatus = "ZUGESTELLT_SIMULIERT";
 
@@ -323,7 +336,7 @@ export interface CreateOrderRequest {
   photoDataUrl?: string | null; // data:image/jpeg;base64,... client resizes, max ~1.5 MB
   customerName?: string | null;
   customerEmail?: string | null;
-  customerPhone?: string | null;
+  customerPhone: string; // required, so the business can always reach the customer
   plannedPickupDate?: string | null;
   estimatedCompletion?: string | null;
 }

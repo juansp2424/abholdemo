@@ -1,9 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import type { MessageView, MessagesOverview } from "@abholdemo/shared";
+import { NOTIFY_MAX_LENGTH, contactChannel, type MessageView, type MessagesOverview } from "@abholdemo/shared";
 import { toMonthString } from "../clock.js";
 import type { Ctx } from "../context.js";
-import { revokeSubscription, toMessageView } from "../domain.js";
-import { fail, invalid } from "../validation.js";
+import { addMessage, revokeSubscription, toMessageView } from "../domain.js";
+import { asObject, fail, invalid, optText } from "../validation.js";
 
 const round4 = (n: number) => Math.round(n * 10000) / 10000;
 
@@ -36,11 +36,31 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
     };
   });
 
+  // Free text message from staff, e.g. "parts are on order". Goes to the intake contact: mail if captured, else SMS.
+  app.post("/api/betrieb/orders/:id/notify", async (req, reply): Promise<MessageView> => {
+    const db = ctx.store.db;
+    const order = db.orders.find((o) => o.id === (req.params as { id: string }).id);
+    if (!order) return fail(404, "NOT_FOUND", "Auftrag nicht gefunden.");
+    const text = optText(asObject(req.body).text, "Die Mitteilung", NOTIFY_MAX_LENGTH);
+    if (!text) invalid("Bitte schreiben Sie, was der Kunde erfahren soll.");
+    if (order.status === "ABGEHOLT" || order.status === "STORNIERT") {
+      fail(409, "NOT_ALLOWED", "Zu diesem Auftrag kann keine Mitteilung mehr gesendet werden.");
+    }
+    const channel = contactChannel(order.customerEmail, order.customerPhone);
+    if (!channel) return fail(409, "NOT_ALLOWED", "Für diesen Auftrag ist weder eine Mailadresse noch eine Telefonnummer gespeichert.");
+    const recipient = channel === "MAIL" ? order.customerEmail! : order.customerPhone!;
+    reply.code(201);
+    return toMessageView(db, addMessage(db, order, "MITTEILUNG", channel, recipient, ctx.now(), text!));
+  });
+
   // Demo: the customer answered STOP to an SMS or WhatsApp message.
   app.post("/api/betrieb/messages/:id/simulate-stop", async (req): Promise<MessageView> => {
     const db = ctx.store.db;
     const msg = db.messages.find((m) => m.id === (req.params as { id: string }).id);
     if (!msg) return fail(404, "NOT_FOUND", "Nachricht nicht gefunden.");
+    if (msg.type !== "ABHOLBEREIT" && msg.type !== "ERINNERUNG") {
+      return fail(409, "NOT_ALLOWED", "Eine STOP Antwort gibt es nur bei Nachrichten, die der Kunde bestellt hat.");
+    }
     if (msg.channel === "MAIL") {
       return fail(409, "NOT_ALLOWED", "Eine STOP Antwort gibt es nur bei SMS und WhatsApp.");
     }

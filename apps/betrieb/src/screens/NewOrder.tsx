@@ -66,6 +66,10 @@ export function NewOrder() {
       itemRef.current?.focus();
       return;
     }
+    if (!phone.trim()) {
+      setError("Bitte geben Sie die Telefonnummer des Kunden an.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const body: CreateOrderRequest = {
@@ -74,7 +78,7 @@ export function NewOrder() {
       photoDataUrl: photo,
       customerName: name.trim() || null,
       customerEmail: email.trim() || null,
-      customerPhone: phone.trim() || null,
+      customerPhone: phone.trim(),
       plannedPickupDate: planned || null,
       estimatedCompletion: estimated || null,
     };
@@ -148,6 +152,19 @@ export function NewOrder() {
           </p>
         )}
 
+        <label className="field">
+          <span>Telefonnummer (Pflichtfeld)</span>
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            autoComplete="off"
+            placeholder="zum Beispiel +49 151 00000012"
+            aria-required="true"
+          />
+          <small className="muted">Damit können Sie dem Kunden Bescheid sagen, wenn sich eine Reparatur verzögert.</small>
+        </label>
+
         <button type="button" className="btn btn-secondary" aria-expanded={more} onClick={() => setMore((m) => !m)}>
           {more ? "Weniger Angaben" : "Mehr Angaben"}
         </button>
@@ -174,10 +191,6 @@ export function NewOrder() {
               <span>Mailadresse</span>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="off" placeholder="zum Beispiel petra@beispiel.de" />
               <small className="muted">Mit Mailadresse bekommt der Kunde den Statuslink.</small>
-            </label>
-            <label className="field">
-              <span>Handynummer</span>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" placeholder="zum Beispiel +49 151 00000012" />
             </label>
             <label className="field">
               <span>Geplantes Abholdatum</span>

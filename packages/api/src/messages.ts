@@ -31,6 +31,7 @@ export function buildMessageText(
   code: string,
   channel: Channel,
   settings: Pick<BusinessSettings, "name" | "webname" | "messageTemplate">,
+  freeText = "",
 ): string {
   const link = statusUrl(settings.webname, code);
   const vars = { betrieb: settings.name, nummer: code, link };
@@ -39,6 +40,8 @@ export function buildMessageText(
       return `Guten Tag, Ihr Auftrag ${code} bei ${settings.name} ist angenommen. Den Stand sehen Sie hier: ${link}`;
     case "ABHOLBEREIT":
       return renderTemplate(settings.messageTemplate, vars) + unsubscribeSuffix(channel, link);
+    case "MITTEILUNG":
+      return `Mitteilung zu Ihrem Auftrag ${code} von ${settings.name}: ${freeText} Den Stand sehen Sie hier: ${link}`;
     case "ERINNERUNG":
       return (
         `Guten Tag, Ihr Auftrag ${code} bei ${settings.name} liegt zur Abholung bereit. ` +

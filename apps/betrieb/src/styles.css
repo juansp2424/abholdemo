@@ -322,3 +322,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
 .cal-detail .cal-detail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
 .cal-detail p { margin: 0 0 12px; }
 @media (max-width: 767px) { .cal { grid-template-columns: 48px minmax(0, 1fr); } }
+
+.notify-form { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+.notify-form h3 { margin: 0; }

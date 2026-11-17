@@ -43,6 +43,7 @@ export function addMessage(
   channel: Channel,
   recipient: string,
   atMs: number,
+  freeText?: string,
 ): MessageRec {
   const msg: MessageRec = {
     id: `m${++db.counters.message}`,
@@ -50,7 +51,7 @@ export function addMessage(
     type,
     channel,
     recipient,
-    text: buildMessageText(type, order.code, channel, db.settings),
+    text: buildMessageText(type, order.code, channel, db.settings, freeText),
     link: statusUrl(db.settings.webname, order.code),
     deliveryStatus: "ZUGESTELLT_SIMULIERT",
     costEur: costFor(channel),

@@ -75,7 +75,7 @@ export function Messages() {
                   <dt>Zustellstatus</dt>
                   <dd>{DELIVERY_STATUS_LABELS[m.deliveryStatus]}</dd>
                 </dl>
-                {m.channel !== "MAIL" ? (
+                {m.channel !== "MAIL" && (m.type === "ABHOLBEREIT" || m.type === "ERINNERUNG") ? (
                   <div className="msg-demo">
                     {m.stopSimulated ? (
                       <span className="muted">STOP Antwort wurde simuliert. Der Kunde ist abgemeldet.</span>

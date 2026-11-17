@@ -55,18 +55,19 @@ Vorhandene Demo Aufträge für die Kundenseite: `D3FY6W` (abholbereit, ohne Eint
 
 Zwei Fenster nebeneinander: links Betriebs App (Tablet), rechts Kundenwebsite (Handy Ansicht).
 
-1. **Auftrag anlegen (20 s).** Betriebs App, als `inhaber` anmelden, "Neuer Auftrag". Gegenstand zum Beispiel "Auto, Ölwechsel" eintippen (oder einen Knopf der eigenen Schnellauswahl antippen, siehe unten), Enter. Die Nummer erscheint groß, sie kommt auf den Anhänger.
+1. **Auftrag anlegen (20 s).** Betriebs App, als `inhaber` anmelden, "Neuer Auftrag". Gegenstand zum Beispiel "Auto, Ölwechsel" eintippen (oder einen Knopf der eigenen Schnellauswahl antippen, siehe unten), Enter. Dazu die Telefonnummer des Kunden (Pflicht, zum Beispiel `+49 151 00000012`). Die Nummer erscheint groß, sie kommt auf den Anhänger.
 2. **Kunde fragt den Stand.** Kundenwebsite `/b/werkstatt-demo`, Nummer eingeben (klein und mit Leerzeichen geht auch). Statusseite zeigt "Angenommen". Kein Name, kein Gegenstand.
 3. **Kunde trägt sich ein.** "Sag mir Bescheid": Mail wählen, Adresse eingeben, Haken bei der Zustimmung setzen, abschicken.
 4. **Betrieb setzt Abholbereit.** Auftrag in der Liste öffnen, großer Knopf "Abholbereit".
 5. **Nachricht erscheint.** Menü "Nachrichten": die simulierte Mail mit Link, maskiertem Empfänger, Kosten 0,00 €. Monatssumme oben.
 6. **Kunde bucht einen Slot.** Statusseite neu laden (oder Link aus der Nachricht öffnen): freie Abholzeiten erscheinen. Eine Zeit wählen, Bestätigung erscheint. Ändern und Absagen gehen hier auch.
 7. **Betrieb sieht den Slot.** Menü "Kalender": Tageskalender mit Uhrzeiten. Jede Abholung ist ein Balken mit der Auftragsnummer. Gibt es mehrere Abholungen zur selben Zeit, stehen die Balken nebeneinander und der Kalender wird breiter. Liegt der Slot morgen, mit "Nächster Tag" blättern. Auf einen Balken tippen, dann "Abgeholt": Status wird gesetzt, der Slot wird frei, der Balken wird grau (Erschienen). Oben steht "Voraussichtlich fertig" mit den Aufträgen, deren Fertigstellung auf diesen Tag fällt.
-8. **Bonus (30 s).** Menü "Demo": "Zeit vorspulen" um 3 Tage. `G8UE4R` wird überfällig und bekommt eine Erinnerung (Nachrichten). "Aufsteller" zeigt den QR Code zum Ausdrucken. "Demodaten zurücksetzen" stellt alles wieder her.
+8. **Verzögerung melden (30 s).** Auftrag öffnen, im Abschnitt "Benachrichtigung" bei "Mitteilung an den Kunden" einen Text schreiben, zum Beispiel "Das Ersatzteil ist bestellt. Die Reparatur dauert zwei Tage länger." und "Mitteilung senden". Mit Mailadresse geht sie per Mail, sonst per SMS an die Telefonnummer. Sie steht danach unter "Nachrichten".
+9. **Bonus (30 s).** Menü "Demo": "Zeit vorspulen" um 3 Tage. `G8UE4R` wird überfällig und bekommt eine Erinnerung (Nachrichten). "Aufsteller" zeigt den QR Code zum Ausdrucken. "Demodaten zurücksetzen" stellt alles wieder her.
 
 ## Was simuliert ist
 
-* **Nachrichten:** Es wird nichts versendet. Mail, SMS und WhatsApp landen nur in der Nachrichtenübersicht, mit den Kosten, die echt anfallen würden (Mail 0,00 €, WhatsApp 0,0456 €, SMS 0,075 €).
+* **Nachrichten und Mitteilungen:** Es wird nichts versendet. Mail, SMS und WhatsApp landen nur in der Nachrichtenübersicht, mit den Kosten, die echt anfallen würden (Mail 0,00 €, WhatsApp 0,0456 €, SMS 0,075 €).
 * **STOP Antwort** auf SMS oder WhatsApp: per Demo Knopf in der Nachrichtenübersicht.
 * **Zeit:** Das Backend hat eine Demouhr. "Zeit vorspulen" verschiebt sie für Fristen, Überfällig und Slots.
 * **Hosting:** alles läuft lokal. Links und QR Code zeigen auf `localhost:5174`.

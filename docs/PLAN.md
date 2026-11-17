@@ -159,3 +159,13 @@ Neue Vorgabe des Auftraggebers, ersetzt den Schuhmacher Bezug aus dem Ursprungsp
 * Beim Buchen war das schon gewährleistet: nur vom Backend aus Öffnungszeiten und Slotlänge erzeugte Zeiten werden angenommen (alles andere ist `SLOT_INVALID`, auch Mittagspause, vor Öffnung, nach Schließung, Sonntag, krumme Minuten).
 * Lücke geschlossen: Ändert der Inhaber Öffnungszeiten oder Slotlänge, werden zukünftige aktive Buchungen, die nicht mehr genau einem erzeugten Slot entsprechen, entfernt. Die Einstellungen melden die Zahl (`releasedBookings`) und zeigen sie dem Inhaber. Die betroffenen Kunden bekommen keine Nachricht (R25: nur eine Nachricht pro Auftrag), sie sehen beim nächsten Aufruf der Statusseite wieder die Slot Auswahl.
 * Nicht geändert: Verringert der Inhaber nur die Kapazität pro Slot, bleiben bestehende Buchungen bestehen.
+
+## 11. Telefonnummer ist Pflicht, Mitteilungen an den Kunden (2026-11-17)
+
+Neue Vorgabe des Auftraggebers: Werkstätten müssen Reparaturen verschieben können, weil Teile bestellt werden müssen, und dem Kunden dann Bescheid sagen.
+
+* **R14 geändert:** Pflichtteil beim neuen Auftrag sind jetzt zwei Angaben: Gegenstand und Telefonnummer. Alles andere bleibt optional ("Mehr Angaben"). Das Backend lehnt Aufträge ohne gültige Telefonnummer ab. Alle Seed Aufträge haben eine Nummer.
+* **Mitteilung:** Im Auftrag (Abschnitt Benachrichtigung) gibt es ein Eingabefeld "Ihre Mitteilung". Die Mitteilung geht an den Kontakt der Annahme: per Mail, wenn eine Mailadresse erfasst wurde, sonst per SMS an die Telefonnummer. Die Oberfläche zeigt vorher Kanal und Empfänger. Nachrichtenart `MITTEILUNG`, erscheint in der Nachrichtenübersicht mit Kosten (Mail 0,00 Euro, SMS 0,075 Euro). Es wird nichts wirklich gesendet.
+* **Verhältnis zu R25 (genau eine Nachricht pro Auftrag):** R25 gilt für die automatische Nachricht "Abholbereit" an Kunden, die sich auf der Kundenseite eingetragen haben. Die Mitteilung ist eine ausdrückliche, manuelle Handlung des Betriebs an den Kontakt, den der Kunde bei der Abgabe selbst genannt hat. Sie braucht keinen Eintrag auf der Kundenseite, zählt nicht zur einen Abholbereit Nachricht und kann mehrfach gesendet werden.
+* **Grenzen:** keine Mitteilung bei Abgeholt und Storniert. Die Länge ist auf 500 Zeichen begrenzt. Kein WhatsApp Weg (nur Mail und SMS nach der Regel oben). Das Datum der voraussichtlichen Fertigstellung ändert sich nicht automatisch, der Betrieb kann es im Text nennen.
+* **Datenschutz Hinweis für später:** Die Telefonnummer als Pflichtfeld und der Versand ohne Eintrag des Kunden brauchen in einem echten Betrieb einen passenden Hinweis bei der Annahme. In der Demo ist das nicht abgebildet.

@@ -47,7 +47,7 @@ export function isPhone(v: string): boolean {
 
 export const EMAIL_ERROR = "Die Mailadresse sieht nicht richtig aus. Bitte prüfen Sie sie.";
 export const PHONE_ERROR =
-  "Die Handynummer sieht nicht richtig aus. Bitte nur Ziffern und Leerzeichen, am Anfang darf ein Plus stehen.";
+  "Die Telefonnummer sieht nicht richtig aus. Bitte nur Ziffern und Leerzeichen, am Anfang darf ein Plus stehen.";
 
 export function optDate(value: unknown, label: string): string | null {
   if (value === undefined || value === null || value === "") return null;

@@ -77,8 +77,9 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
     const customerName = optText(body.customerName, "Der Name", 80);
     const customerEmail = optText(body.customerEmail, "Die Mailadresse", 120);
     if (customerEmail && !isEmail(customerEmail)) invalid(EMAIL_ERROR);
-    const customerPhone = optText(body.customerPhone, "Die Handynummer", 30);
-    if (customerPhone && !isPhone(customerPhone)) invalid(PHONE_ERROR);
+    const customerPhone = optText(body.customerPhone, "Die Telefonnummer", 30);
+    if (!customerPhone) invalid("Bitte geben Sie die Telefonnummer des Kunden an. Damit können Sie ihm bei Verzögerungen Bescheid sagen.");
+    if (!isPhone(customerPhone!)) invalid(PHONE_ERROR);
     const plannedPickupDate = optDate(body.plannedPickupDate, "Das Abholdatum");
     const estimatedCompletion = optDate(body.estimatedCompletion, "Die voraussichtliche Fertigstellung");
 

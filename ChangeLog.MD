@@ -4,6 +4,20 @@ Wichtige Änderungen an der Betriebs App (`apps/betrieb`) und der Kundenwebsite 
 
 Die Zahl hinter dem Datum ist der Commit im Repo, damit sich jede Änderung nachvollziehen lässt (`git show <Commit>`). Planung und Begründungen stehen in `docs/PLAN.md`, der Vertrag zwischen den Teilen in `docs/CONTRACT.md`, die Prüfberichte in `docs/REVIEW.md`.
 
+## 2026-11-17: Telefonnummer ist Pflicht, Mitteilungen an den Kunden (Commit folgt)
+
+**Betriebs App**
+* Neuer Auftrag: Pflichtangaben sind jetzt Gegenstand und Telefonnummer. Die Telefonnummer steht direkt unter dem Gegenstand und nicht mehr unter "Mehr Angaben". Ohne sie lässt sich der Auftrag nicht speichern.
+* Auftrag, Abschnitt "Benachrichtigung": neues Eingabefeld "Mitteilung an den Kunden", zum Beispiel wenn ein Teil noch bestellt werden muss und sich die Reparatur verzögert. Die Mitteilung geht per Mail, wenn bei der Annahme eine Mailadresse erfasst wurde, sonst per SMS an die Telefonnummer. Vor dem Senden steht, an wen und auf welchem Weg. Bis 500 Zeichen, mehrfach möglich. Bei abgeholten und stornierten Aufträgen fehlt das Feld.
+* Nachrichten: Die Mitteilung erscheint mit der Art "Mitteilung", maskiertem Empfänger, Text und Kosten (Mail 0,00 Euro, SMS 0,075 Euro). Der Knopf "STOP Antwort simulieren" gibt es nur noch bei Nachrichten, die der Kunde bestellt hat (Abholbereit und Erinnerung).
+
+**Kundenwebsite**
+* Keine Änderung. Mitteilungen sind dort nicht sichtbar.
+
+**Backend**
+* Aufträge ohne gültige Telefonnummer werden abgelehnt (der Fehlertext spricht von "Telefonnummer" statt "Handynummer"). Alle Demo Aufträge haben jetzt eine Telefonnummer.
+* Neuer Endpunkt `POST /api/betrieb/orders/:id/notify`. Die Mitteilung zählt nicht zur einen Abholbereit Nachricht und braucht keinen Eintrag des Kunden auf der Kundenseite.
+
 ## 2026-11-17: Abholzeiten folgen zwingend den Öffnungszeiten (`55626b1`)
 
 **Betriebs App**

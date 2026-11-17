@@ -81,7 +81,7 @@ export function seed(now: number): Db {
       category: s.category ?? null,
       customerName: s.name ?? null,
       customerEmail: s.email ?? null,
-      customerPhone: s.phone ?? null,
+      customerPhone: s.phone ?? `+49 151 000000${String(10 + db.orders.length).padStart(2, "0")}`,
       plannedPickupDate: s.plannedPickup ? day(s.plannedPickup) : null,
       estimatedCompletion: s.estimatedCompletion ? day(s.estimatedCompletion) : null,
       status: "ANGENOMMEN",

@@ -1,9 +1,7 @@
 import { useState } from "react";
-import {
-  CHANNEL_LABELS,
-  STATUS_LABELS,
-} from "@abholdemo/shared";
-import type { OrderDetail, OrderStatus } from "@abholdemo/shared";
+import type { FormEvent } from "react";
+import { CHANNEL_LABELS, NOTIFY_MAX_LENGTH, STATUS_LABELS, contactChannel } from "@abholdemo/shared";
+import type { MessageView, OrderDetail, OrderStatus } from "@abholdemo/shared";
 import { api, errorMessage } from "../api";
 import { formatDayShort, formatDateTime, formatSlot } from "../format";
 import { Alert, PageHeader, StatusBadge, useLoad } from "../ui";
@@ -27,6 +25,8 @@ export function OrderDetailScreen({ id }: { id: string }) {
     }
   }
 
+  const refresh = async () => setData(await api<OrderDetail>("GET", `/api/betrieb/orders/${encodeURIComponent(id)}`));
+
   return (
     <>
       <PageHeader title="Auftrag">
@@ -36,20 +36,21 @@ export function OrderDetailScreen({ id }: { id: string }) {
       </PageHeader>
       <Alert message={error} />
       {!data && !error ? <p className="muted">Auftrag wird geladen.</p> : null}
-      {data ? <Body o={data} busy={busy} change={change} confirmCancel={confirmCancel} setConfirmCancel={setConfirmCancel} actionError={actionError} /> : null}
+      {data ? <Body o={data} refresh={refresh} busy={busy} change={change} confirmCancel={confirmCancel} setConfirmCancel={setConfirmCancel} actionError={actionError} /> : null}
     </>
   );
 }
 
 function Body(props: {
   o: OrderDetail;
+  refresh: () => Promise<void>;
   busy: boolean;
   change: (s: OrderStatus) => void;
   confirmCancel: boolean;
   setConfirmCancel: (v: boolean) => void;
   actionError: string | null;
 }) {
-  const { o, busy, change, confirmCancel, setConfirmCancel, actionError } = props;
+  const { o, refresh, busy, change, confirmCancel, setConfirmCancel, actionError } = props;
   const canReady = o.allowedTransitions.includes("ABHOLBEREIT");
   const others = o.allowedTransitions.filter((s) => s !== "ABHOLBEREIT");
   const sub = o.subscription;
@@ -169,6 +170,7 @@ function Body(props: {
             </ul>
           </>
         ) : null}
+        <NotifyForm o={o} onSent={refresh} />
       </section>
 
       <section className="card">
@@ -207,4 +209,56 @@ function sourceLabel(s: string): string {
   if (s === "LINK") return "Link";
   if (s === "STOP") return "STOP Antwort";
   return s;
+}
+
+/** Free text message to the customer's intake contact: mail if an address was captured, otherwise SMS. */
+function NotifyForm({ o, onSent }: { o: OrderDetail; onSent: () => Promise<void> }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  if (o.status === "ABGEHOLT" || o.status === "STORNIERT") return null;
+  const channel = contactChannel(o.customerEmail, o.customerPhone);
+  if (!channel) return <p className="muted">Für diesen Auftrag ist weder eine Mailadresse noch eine Telefonnummer gespeichert.</p>;
+  const to = channel === "MAIL" ? o.customerEmail : o.customerPhone;
+
+  async function send(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(null);
+    try {
+      await api<MessageView>("POST", `/api/betrieb/orders/${encodeURIComponent(o.id)}/notify`, { text });
+      setText("");
+      setMsg({ kind: "success", text: "Die Mitteilung wurde gesendet. Sie steht unter Nachrichten." });
+      await onSent();
+    } catch (err) {
+      setMsg({ kind: "error", text: errorMessage(err) });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="notify-form" onSubmit={send}>
+      <h3>Mitteilung an den Kunden</h3>
+      <p className="muted">
+        Geht per {CHANNEL_LABELS[channel]} an {to}.{channel === "SMS" ? " Es liegt keine Mailadresse vor, deshalb per SMS." : ""} Zum Beispiel, wenn ein Teil noch bestellt werden muss. <span className="demo-tag">Demo</span> Es wird nichts wirklich gesendet.
+      </p>
+      <label className="field">
+        <span>Ihre Mitteilung</span>
+        <textarea
+          rows={3}
+          value={text}
+          maxLength={NOTIFY_MAX_LENGTH}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="zum Beispiel: Das Ersatzteil ist bestellt. Die Reparatur dauert zwei Tage länger."
+          required
+        />
+        <small className="muted">{text.length} von {NOTIFY_MAX_LENGTH} Zeichen</small>
+      </label>
+      <Alert message={msg?.text} kind={msg?.kind} />
+      <button className="btn btn-primary" disabled={busy || !text.trim()}>
+        {busy ? "Wird gesendet" : "Mitteilung senden"}
+      </button>
+    </form>
+  );
 }

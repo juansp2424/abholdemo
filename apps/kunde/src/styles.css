@@ -118,3 +118,6 @@ fieldset { border: 0; padding: 0; margin: 12px 0; }
   .box.warn { border-color: #d9a400; }
 }
 
+
+/* Only the business name uses Futura */
+.biz, .biz-title { font-family: Futura, "Futura PT", "Century Gothic", "Avenir Next", "Trebuchet MS", sans-serif; letter-spacing: 0.01em; }

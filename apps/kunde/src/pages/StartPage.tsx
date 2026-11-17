@@ -50,7 +50,7 @@ export function StartPage({ web }: { web: string }) {
     <main className="page">
       <header className="brand">
         {biz.logoDataUrl && <img src={biz.logoDataUrl} alt="" className="logo" />}
-        <h1>{biz.name}</h1>
+        <h1 className="biz-title">{biz.name}</h1>
       </header>
       <form onSubmit={submit} noValidate>
         <label htmlFor="code" className="label">Auftragsnummer</label>

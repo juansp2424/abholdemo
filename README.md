@@ -74,4 +74,4 @@ Zwei Fenster nebeneinander: links Betriebs App (Tablet), rechts Kundenwebsite (H
 * **Daten:** Ein Betrieb ("Werkstatt Demo"), erfundene Namen und Kontakte, Speicherung in einer JSON Datei.
 * **Gerät für die Fehlversuchssperre:** die IP Adresse. Lokal teilen sich alle Fenster dieselbe. Bekannte Grenze der Demo: Ein Programm auf demselben Rechner kann die Sperre über direkte Aufrufe an Port 4000 mit gefälschtem `X-Forwarded-For` umgehen; über die Kundenwebsite geht das nicht.
 
-Planung, Annahmen und Vertrag: `docs/PLAN.md`, `docs/CONTRACT.md`. Prüfbericht: `docs/REVIEW.md`.
+Planung, Annahmen und Vertrag: `docs/PLAN.md`, `docs/CONTRACT.md`. Prüfbericht: `docs/REVIEW.md`. Alle Änderungen an den Websites: `ChangeLog.MD`.

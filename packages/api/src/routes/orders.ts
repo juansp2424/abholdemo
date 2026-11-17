@@ -4,6 +4,7 @@ import {
   normalizeCode,
   MANUAL_TRANSITIONS,
   ORDER_STATUSES,
+  WEEKDAYS,
   type Attendance,
   type DaySlotList,
   type OrderDetail,
@@ -164,6 +165,13 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
         return { orderId: o.id, code: o.code, start: b.start, end: b.end, status: o.status, attendance };
       })
       .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
-    return { date: date as string, entries };
+    const completions = db()
+      .orders.filter((o) => o.estimatedCompletion === date && o.status !== "STORNIERT")
+      .map((o) => ({ orderId: o.id, code: o.code, status: o.status }))
+      .sort((a, b) => a.code.localeCompare(b.code));
+    const [y, m, d] = (date as string).split("-").map(Number);
+    const weekday = WEEKDAYS[(new Date(y, m - 1, d).getDay() + 6) % 7];
+    const openingHours = db().settings.openingHours[weekday].map((iv) => ({ ...iv }));
+    return { date: date as string, entries, completions, openingHours };
   });
 }

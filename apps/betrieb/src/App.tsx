@@ -8,7 +8,7 @@ import { Login } from "./screens/Login";
 import { OrderList } from "./screens/OrderList";
 import { NewOrder } from "./screens/NewOrder";
 import { OrderDetailScreen } from "./screens/OrderDetail";
-import { Today } from "./screens/Today";
+import { Calendar } from "./screens/Calendar";
 import { Messages } from "./screens/Messages";
 import { Poster } from "./screens/Poster";
 import { Settings } from "./screens/Settings";
@@ -40,7 +40,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { path: "/auftraege", label: "Aufträge", icon: "▤" },
   { path: "/neu", label: "Neuer Auftrag", icon: "＋" },
-  { path: "/heute", label: "Heute", icon: "◷" },
+  { path: "/kalender", label: "Kalender", icon: "◷" },
   { path: "/nachrichten", label: "Nachrichten", icon: "✉" },
   { path: "/aufsteller", label: "Aufsteller", icon: "▦" },
   { path: "/einstellungen", label: "Einstellungen", icon: "⚙", ownerOnly: true },
@@ -133,7 +133,7 @@ function Shell({ user, onLogout }: { user: StaffUser; onLogout: () => void }) {
   let screen;
   if (route === "/neu") screen = <NewOrder />;
   else if (route.startsWith("/auftrag/")) screen = <OrderDetailScreen id={route.slice("/auftrag/".length)} />;
-  else if (route === "/heute") screen = <Today />;
+  else if (route === "/kalender") screen = <Calendar />;
   else if (route === "/nachrichten") screen = <Messages />;
   else if (route === "/aufsteller") screen = <Poster />;
   else if (route === "/einstellungen") screen = isOwner ? <Settings /> : <NotAllowed />;

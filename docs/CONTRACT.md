@@ -110,7 +110,7 @@ Owner only (`INHABER`), else `403 FORBIDDEN` "Nur für Inhaber.": settings and s
 
 ### 6.3 Day list (staff)
 
-`GET /api/betrieb/day-slots?date=YYYY-MM-DD` (default: today, demo clock) → `DaySlotList`. Includes released bookings of orders that were picked up (attendance `ERSCHIENEN`). Attendance: `ERSCHIENEN` if status `ABGEHOLT`; else `NICHT_ERSCHIENEN` if `end < now()`; else `ERWARTET`. Cancelled by the customer or `STORNIERT` bookings are not listed.
+`GET /api/betrieb/day-slots?date=YYYY-MM-DD` (default: today, demo clock) → `DaySlotList` (`entries`, plus `completions`: non cancelled orders whose `estimatedCompletion` is this date, sorted by code, and `openingHours`: the intervals of this weekday, empty when closed). Includes released bookings of orders that were picked up (attendance `ERSCHIENEN`). Attendance: `ERSCHIENEN` if status `ABGEHOLT`; else `NICHT_ERSCHIENEN` if `end < now()`; else `ERWARTET`. Cancelled by the customer or `STORNIERT` bookings are not listed.
 
 ### 6.4 Messages (staff)
 

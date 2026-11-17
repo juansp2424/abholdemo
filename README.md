@@ -61,7 +61,7 @@ Zwei Fenster nebeneinander: links Betriebs App (Tablet), rechts Kundenwebsite (H
 4. **Betrieb setzt Abholbereit.** Auftrag in der Liste öffnen, großer Knopf "Abholbereit".
 5. **Nachricht erscheint.** Menü "Nachrichten": die simulierte Mail mit Link, maskiertem Empfänger, Kosten 0,00 €. Monatssumme oben.
 6. **Kunde bucht einen Slot.** Statusseite neu laden (oder Link aus der Nachricht öffnen): freie Abholzeiten erscheinen. Eine Zeit wählen, Bestätigung erscheint. Ändern und Absagen gehen hier auch.
-7. **Betrieb sieht den Slot.** Menü "Heute": Tagesliste. Liegt der Slot morgen, mit "Nächster Tag" blättern. Knopf "Abgeholt" setzt den Status und gibt den Slot frei; die Zeile zeigt "Erschienen".
+7. **Betrieb sieht den Slot.** Menü "Kalender": Tageskalender mit Uhrzeiten. Jede Abholung ist ein Balken mit der Auftragsnummer. Gibt es mehrere Abholungen zur selben Zeit, stehen die Balken nebeneinander und der Kalender wird breiter. Liegt der Slot morgen, mit "Nächster Tag" blättern. Auf einen Balken tippen, dann "Abgeholt": Status wird gesetzt, der Slot wird frei, der Balken wird grau (Erschienen). Oben steht "Voraussichtlich fertig" mit den Aufträgen, deren Fertigstellung auf diesen Tag fällt.
 8. **Bonus (30 s).** Menü "Demo": "Zeit vorspulen" um 3 Tage. `G8UE4R` wird überfällig und bekommt eine Erinnerung (Nachrichten). "Aufsteller" zeigt den QR Code zum Ausdrucken. "Demodaten zurücksetzen" stellt alles wieder her.
 
 ## Was simuliert ist

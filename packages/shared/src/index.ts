@@ -359,9 +359,18 @@ export interface DaySlotEntry {
   attendance: Attendance;
 }
 
+/** Order whose expected completion (a date, no time) falls on the day. Cancelled orders are not listed. */
+export interface DayCompletionEntry {
+  orderId: string;
+  code: string;
+  status: OrderStatus;
+}
+
 export interface DaySlotList {
   date: string; // YYYY-MM-DD
-  entries: DaySlotEntry[]; // sorted by start
+  entries: DaySlotEntry[]; // booked pickups, sorted by start
+  completions: DayCompletionEntry[]; // expected completions on this date, sorted by code
+  openingHours: TimeInterval[]; // opening hours of this weekday, for the time axis of the calendar (empty = closed)
 }
 
 // ---------------------------------------------------------------------------

@@ -29,7 +29,7 @@ Siehe `docs/CONTRACT.md` und `packages/shared/src/index.ts`. Nur der Orchestrato
 3. Neuer Auftrag: Gegenstand (Freitext + Schnellauswahl), aufklappbar "Mehr Angaben" (Foto, Name, Mail, Handy, geplantes Abholdatum, voraussichtliche Fertigstellung); Speichern
 4. Auftrag gespeichert: Auftragsnummer sehr groß, Knopf "Nächster Auftrag"
 5. Auftragsdetail: Status, großer Knopf "Abholbereit", weitere Knöpfe In Arbeit, Abgeholt, Storniert, Foto, Kontakt, Benachrichtigung und Zustimmungsprotokoll, Slot, Statusprotokoll
-6. Heute: Tagesliste der gebuchten Slots (Uhrzeit, Nummer, Erschienen ja oder nein), Tag vor und zurück
+6. Kalender: Tageskalender mit Zeitachse (nur Öffnungszeiten, Mittagspause schraffiert). Abholungen als Balken mit Auftragsnummer, parallele Abholungen im selben Slot nebeneinander (Kalender wird breiter, seitlich scrollbar). Oben "Voraussichtlich fertig" für Aufträge mit Fertigstellung an diesem Tag. Tag vor und zurück, Datum wählen, Balken antippen zeigt Details mit "Abgeholt" und "Zum Auftrag". Rote Linie für die Demo Uhrzeit.
 7. Nachrichten: Liste der simulierten Nachrichten, Monatssumme, Zahl pro Auftrag, Demo Knopf "STOP Antwort simulieren"
 8. Aufsteller: QR Code, Webname, A5 Druckvorlage, Knopf "Drucken"
 9. Einstellungen (nur Inhaber)
@@ -147,3 +147,9 @@ Neue Vorgabe des Auftraggebers, ersetzt den Schuhmacher Bezug aus dem Ursprungsp
 * **Seed neutral:** Betrieb "Werkstatt Demo" (Webname `werkstatt-demo`), Seed Aufträge als Mischung aus Fahrrad und Auto, ohne Kategorien. Mitarbeiter heißt Tom Werner. Alte Daten bleiben beim Start erhalten (die Schnellauswahl wird als leer ergänzt); für den neuen Seed einmal "Demodaten zurücksetzen".
 * **Design:** Blau und Weiß statt Grün, Schrift: ursprüngliche Systemschrift. Nur der Betriebsname (Kopfleiste, Kundenseiten, Aufsteller) ist in Futura (Ausweichschriften Century Gothic, Avenir Next, Trebuchet MS, weil Futura nicht auf jedem Gerät vorhanden ist). Cambria wurde ausprobiert und wieder entfernt. Akzent: typisches Tech Blau (#2563eb). Statusfarben bleiben nach Bedeutung (Abholbereit grün, Überfällig orange).
 * **Unverändert:** Der Text "Nummer vom Anhänger eingeben" auf dem Aufsteller (R21) bleibt, weil er im Ursprungsprompt so steht.
+
+## 9. Änderung: Seite "Heute" wird "Kalender" (2026-11-17)
+
+* Menüpunkt und Route heißen jetzt Kalender (`#/kalender`). Der Endpunkt `GET /api/betrieb/day-slots` liefert zusätzlich `completions` (Aufträge mit voraussichtlicher Fertigstellung an diesem Datum, ohne Stornierte, nach Nummer sortiert) und `openingHours` (Öffnungszeiten des Wochentags für die Zeitachse).
+* Fertigstellung ist nur ein Datum ohne Uhrzeit und steht deshalb als Liste oberhalb der Zeitachse, nicht als Balken.
+* Die Zeitachse zeigt die Öffnungszeiten, bei Abholungen außerhalb davon wird sie erweitert.

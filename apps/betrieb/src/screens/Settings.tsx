@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { CHANNEL_LABELS, SLOT_LENGTH_OPTIONS, WEEKDAYS, WEEKDAY_LABELS } from "@abholdemo/shared";
+import { CHANNEL_LABELS, QUICK_CATEGORY_MAX_COUNT, QUICK_CATEGORY_MAX_LENGTH, SLOT_LENGTH_OPTIONS, WEEKDAYS, WEEKDAY_LABELS } from "@abholdemo/shared";
 import type { BusinessSettings, Channel, SlotLengthMinutes, TimeInterval, Weekday } from "@abholdemo/shared";
 import { api, errorMessage } from "../api";
 import { resizeImage } from "../image";
@@ -26,6 +26,7 @@ function SettingsForm({ initial }: { initial: BusinessSettings }) {
   const [msg, setMsg] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [preview, setPreview] = useState("");
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [newCategory, setNewCategory] = useState("");
   const template = useDebounced(s.messageTemplate, 400);
 
   useEffect(() => {
@@ -44,6 +45,22 @@ function SettingsForm({ initial }: { initial: BusinessSettings }) {
   }, [template]);
 
   const set = <K extends keyof BusinessSettings>(k: K, v: BusinessSettings[K]) => setS((cur) => ({ ...cur, [k]: v }));
+
+  function addQuick() {
+    const text = newCategory.trim().replace(/\s+/g, " ");
+    if (!text) return;
+    if (s.quickCategories.some((c) => c.toLocaleLowerCase("de-DE") === text.toLocaleLowerCase("de-DE"))) {
+      setMsg({ kind: "error", text: `"${text}" steht schon in der Schnellauswahl.` });
+      return;
+    }
+    if (s.quickCategories.length >= QUICK_CATEGORY_MAX_COUNT) {
+      setMsg({ kind: "error", text: `Die Schnellauswahl darf höchstens ${QUICK_CATEGORY_MAX_COUNT} Einträge haben.` });
+      return;
+    }
+    setMsg(null);
+    set("quickCategories", [...s.quickCategories, text]);
+    setNewCategory("");
+  }
 
   function setDay(day: Weekday, intervals: TimeInterval[]) {
     setS((cur) => ({ ...cur, openingHours: { ...cur.openingHours, [day]: intervals } }));
@@ -93,6 +110,47 @@ function SettingsForm({ initial }: { initial: BusinessSettings }) {
               Logo entfernen
             </button>
           ) : null}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>Schnellauswahl für neue Aufträge</h2>
+        <p className="muted">
+          Das sind die Knöpfe, die beim Anlegen eines Auftrags unter dem Feld Gegenstand erscheinen. Tragen Sie ein, was in Ihrer Werkstatt oft vorkommt, zum Beispiel Ölwechsel, Reifenwechsel oder Schlauch wechseln. Am Ende auf Speichern tippen.
+        </p>
+        {s.quickCategories.length > 0 ? (
+          <ul className="quick-list" aria-label="Aktuelle Schnellauswahl">
+            {s.quickCategories.map((c) => (
+              <li key={c}>
+                <span>{c}</span>
+                <button type="button" className="btn btn-quiet" aria-label={`${c} entfernen`} onClick={() => set("quickCategories", s.quickCategories.filter((x) => x !== c))}>
+                  Entfernen
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">Noch keine Einträge.</p>
+        )}
+        <div className="quick-add">
+          <label className="field">
+            <span>Neuer Eintrag</span>
+            <input
+              value={newCategory}
+              maxLength={QUICK_CATEGORY_MAX_LENGTH}
+              placeholder="zum Beispiel Bremsen wechseln"
+              onChange={(e) => setNewCategory(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addQuick();
+                }
+              }}
+            />
+          </label>
+          <button type="button" className="btn btn-secondary" onClick={addQuick}>
+            Hinzufügen
+          </button>
         </div>
       </section>
 

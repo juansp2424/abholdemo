@@ -46,9 +46,9 @@ describe("auth and roles", () => {
       expect(r.json.error).toEqual({ code: "FORBIDDEN", message: "Nur für Inhaber." });
     }
     expect((await env.api(t, "GET", "/api/betrieb/orders")).status).toBe(200);
-    expect((await env.api(t, "GET", "/api/betrieb/business")).json.webname).toBe("schuster-demo");
+    expect((await env.api(t, "GET", "/api/betrieb/business")).json.webname).toBe("werkstatt-demo");
     expect((await env.api(t, "GET", "/api/demo/clock")).status).toBe(200);
-    expect((await createOrder(env, t)).log[0].actorName).toBe("Tom Sohle");
+    expect((await createOrder(env, t)).log[0].actorName).toBe("Tom Werner");
   });
 });
 
@@ -110,7 +110,7 @@ describe("settings", () => {
     const env = makeEnv();
     const t = await env.token();
     const cur = (await env.api(t, "GET", "/api/betrieb/settings")).json;
-    expect(cur.webname).toBe("schuster-demo");
+    expect(cur.webname).toBe("werkstatt-demo");
     const put = (patch: object) => env.api(t, "PUT", "/api/betrieb/settings", { ...cur, ...patch });
     expect((await put({ slotLengthMinutes: 20 })).status).toBe(400);
     expect((await put({ slotCapacity: 0 })).status).toBe(400);
@@ -127,9 +127,35 @@ describe("settings", () => {
     });
     const ok = await put({ webname: "hacker", name: "Neuer Name", pickupDeadlineDays: 7, slotCapacity: 3 });
     expect(ok.status).toBe(200);
-    expect(ok.json).toMatchObject({ webname: "schuster-demo", name: "Neuer Name", pickupDeadlineDays: 7, slotCapacity: 3 });
+    expect(ok.json).toMatchObject({ webname: "werkstatt-demo", name: "Neuer Name", pickupDeadlineDays: 7, slotCapacity: 3 });
     const prev = await env.api(t, "POST", "/api/betrieb/settings/preview", { template: "Fertig: {nummer} bei {betrieb} {link}" });
-    expect(prev.json.text).toBe("Fertig: ABC234 bei Neuer Name http://localhost:5174/b/schuster-demo/a/ABC234 Keine Nachricht mehr? Abbestellen: http://localhost:5174/b/schuster-demo/a/ABC234?abmelden=1");
+    expect(prev.json.text).toBe("Fertig: ABC234 bei Neuer Name http://localhost:5174/b/werkstatt-demo/a/ABC234 Keine Nachricht mehr? Abbestellen: http://localhost:5174/b/werkstatt-demo/a/ABC234?abmelden=1");
+  });
+});
+
+describe("quick categories", () => {
+  it("starts empty, is owner defined, validated, trimmed, unique and visible to all staff", async () => {
+    const env = makeEnv();
+    const owner = await env.token();
+    const staff = await env.token("mitarbeiter");
+    expect((await env.api(owner, "GET", "/api/betrieb/settings")).json.quickCategories).toEqual([]);
+    expect((await env.api(staff, "GET", "/api/betrieb/business")).json.quickCategories).toEqual([]);
+    const cur = (await env.api(owner, "GET", "/api/betrieb/settings")).json;
+    const put = (quickCategories: unknown) => env.api(owner, "PUT", "/api/betrieb/settings", { ...cur, quickCategories });
+    const ok = await put(["  Ölwechsel ", "Reifenwechsel", "Schlauch   wechseln"]);
+    expect(ok.status).toBe(200);
+    expect(ok.json.quickCategories).toEqual(["Ölwechsel", "Reifenwechsel", "Schlauch wechseln"]);
+    expect((await env.api(staff, "GET", "/api/betrieb/business")).json.quickCategories).toEqual(["Ölwechsel", "Reifenwechsel", "Schlauch wechseln"]);
+    expect((await put(["Ölwechsel", "ölwechsel"])).status).toBe(400);
+    expect((await put([""])).status).toBe(400);
+    expect((await put(["x".repeat(41)])).status).toBe(400);
+    expect((await put(Array.from({ length: 21 }, (_, i) => `Eintrag ${i}`))).status).toBe(400);
+    expect((await put("Ölwechsel")).status).toBe(400);
+    // Omitting the field keeps the current list
+    const { quickCategories: _omit, ...withoutList } = cur;
+    const keep = await env.api(owner, "PUT", "/api/betrieb/settings", withoutList);
+    expect(keep.json.quickCategories).toEqual(["Ölwechsel", "Reifenwechsel", "Schlauch wechseln"]);
+    expect((await env.api(staff, "PUT", "/api/betrieb/settings", cur)).status).toBe(403);
   });
 });
 

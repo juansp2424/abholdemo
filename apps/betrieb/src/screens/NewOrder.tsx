@@ -1,13 +1,14 @@
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { QUICK_CATEGORIES } from "@abholdemo/shared";
 import type { CreateOrderRequest, OrderDetail } from "@abholdemo/shared";
 import { api, errorMessage } from "../api";
 import { go } from "../App";
 import { resizeImage } from "../image";
-import { Alert, PageHeader } from "../ui";
+import { Alert, PageHeader, useApp } from "../ui";
 
 export function NewOrder() {
+  const { user, business } = useApp();
+  const quick = business?.quickCategories ?? [];
   const [item, setItem] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [more, setMore] = useState(false);
@@ -124,17 +125,28 @@ export function NewOrder() {
             onChange={(e) => setItem(e.target.value)}
             maxLength={120}
             autoFocus
-            placeholder="zum Beispiel Stiefel, Sohle erneuern"
+            placeholder="zum Beispiel Auto, Ölwechsel"
             aria-required="true"
           />
         </label>
-        <div className="chips" role="group" aria-label="Schnellauswahl">
-          {QUICK_CATEGORIES.map((c) => (
-            <button type="button" key={c} className="chip" onClick={() => addCategory(c)}>
-              {c}
-            </button>
-          ))}
-        </div>
+        {quick.length > 0 ? (
+          <div className="chips" role="group" aria-label="Schnellauswahl">
+            {quick.map((c) => (
+              <button type="button" key={c} className="chip" onClick={() => addCategory(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="muted quick-empty">
+            Noch keine Schnellauswahl angelegt.{" "}
+            {user.role === "INHABER" ? (
+              <a href="#/einstellungen">Schnellauswahl in den Einstellungen anlegen</a>
+            ) : (
+              "Der Inhaber kann sie in den Einstellungen anlegen."
+            )}
+          </p>
+        )}
 
         <button type="button" className="btn btn-secondary" aria-expanded={more} onClick={() => setMore((m) => !m)}>
           {more ? "Weniger Angaben" : "Mehr Angaben"}

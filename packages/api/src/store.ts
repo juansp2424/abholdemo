@@ -48,6 +48,7 @@ export class Store {
     this.photos = new PhotoStore(dbFile ? join(dirname(dbFile), "photos") : null);
     if (dbFile && existsSync(dbFile)) {
       this.db = JSON.parse(readFileSync(dbFile, "utf8")) as Db;
+      this.db.settings.quickCategories ??= []; // data files from before the quick selection existed
     } else {
       this.db = seedFn();
       this.save();

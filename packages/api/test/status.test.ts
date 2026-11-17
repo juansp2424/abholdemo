@@ -17,7 +17,7 @@ describe("status transitions", () => {
     expect(r.status).toBe(200);
     expect(r.json.status).toBe("IN_ARBEIT");
     expect(r.json.log).toHaveLength(2);
-    expect(r.json.log[1]).toMatchObject({ from: "ANGENOMMEN", to: "IN_ARBEIT", actorId: "u2", actorName: "Tom Sohle" });
+    expect(r.json.log[1]).toMatchObject({ from: "ANGENOMMEN", to: "IN_ARBEIT", actorId: "u2", actorName: "Tom Werner" });
     expect(r.json.log[1].at).toBe(new Date(env.time.value).toISOString());
     const done = await setStatus(env, owner, o.id, "ABHOLBEREIT");
     expect(done.json.readyAt).not.toBeNull();

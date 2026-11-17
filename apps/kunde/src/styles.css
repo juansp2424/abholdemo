@@ -1,15 +1,15 @@
 /* Customer site. Apple style: instant press feedback, size specific tracking, calm materials, restraint.
    Accessibility first: contrast >= 4.5:1, tap targets >= 48px, focus ring, reduced motion/transparency/contrast. */
 :root {
-  --text: #1d1d1f;
-  --muted: #4b4b50;
-  --bg: #f5f5f7;
+  --text: #16202e;
+  --muted: #4a5568;
+  --bg: #f5f8ff;
   --card: #ffffff;
   --panel: #ffffff;
   --line: #6e6e73;
   --hairline: rgba(0, 0, 0, 0.1);
-  --accent: #0b4f8a;
-  --accent-press: #083a68;
+  --accent: #2563eb;
+  --accent-press: #1d4ed8;
   --accent-text: #ffffff;
   --danger-bg: #fdecea;
   --danger: #8a1313;
@@ -27,7 +27,7 @@ body {
   font-family: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, Arial, sans-serif;
   font-size: 1.125rem;
   line-height: 1.5;
-  letter-spacing: 0.005em; /* small text: slightly positive tracking */
+  letter-spacing: 0.005em;
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
 }
@@ -49,7 +49,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   background: #fff; color: var(--text); font: inherit;
   transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
 }
-.code-input:focus, .field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(11, 79, 138, 0.2); }
+.code-input:focus, .field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25); }
 .code-input { font-size: 1.875rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
 .field { font-size: 1.125rem; margin-bottom: 12px; }
 .btn {
@@ -63,7 +63,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .btn:active, .slot:active { transform: scale(0.97); }
 .btn:active { background: var(--accent-press); border-color: var(--accent-press); }
 .btn.secondary { background: #fff; color: var(--accent); }
-.btn.secondary:active { background: #eef3f8; }
+.btn.secondary:active { background: #e8f0fe; }
 .btn:disabled, .slot:disabled { opacity: 0.6; cursor: default; transform: none; }
 .alert { background: var(--danger-bg); color: var(--danger); border: 2px solid var(--danger); border-radius: 14px; padding: 12px 14px; margin-top: 12px; }
 .box { background: var(--card); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); }
@@ -80,7 +80,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
 fieldset { border: 0; padding: 0; margin: 12px 0; }
 .choice { display: flex; align-items: flex-start; gap: 12px; min-height: 48px; padding: 8px 0; cursor: pointer; }
 .choice input { width: 28px; height: 28px; margin: 0; flex: none; accent-color: var(--accent); }
-.tag { margin-left: 8px; font-style: normal; font-size: 1rem; background: var(--ok-bg); border: 1px solid #1e6b34; color: #14502a; border-radius: 999px; padding: 0 10px; }
+.tag { margin-left: 8px; font-style: normal; font-size: 1rem; background: #e8f0fe; border: 1px solid var(--accent); color: #1e40af; border-radius: 999px; padding: 0 10px; }
 .consent { margin-top: 8px; }
 .hint { color: var(--muted); }
 .privacy { border-top: 1px solid var(--hairline); padding-top: 16px; display: flex; flex-direction: column; gap: 8px; color: var(--muted); }
@@ -94,7 +94,7 @@ fieldset { border: 0; padding: 0; margin: 12px 0; }
   font-variant-numeric: tabular-nums;
   transition: transform 120ms var(--ease), background-color 120ms var(--ease);
 }
-.slot:active { background: #eef3f8; }
+.slot:active { background: #e8f0fe; }
 /* Gentle arrival of the page content, opacity only for low end phones */
 .page > * { animation: arrive 220ms var(--ease) both; }
 @keyframes arrive { from { opacity: 0; } to { opacity: 1; } }
@@ -114,6 +114,7 @@ fieldset { border: 0; padding: 0; margin: 12px 0; }
   }
   .code-input, .field, .btn.secondary, .slot { background: #1c1c1e; }
   .btn.secondary:active, .slot:active { background: #2c2c2e; }
-  .tag { color: #b6f0c6; border-color: #3f9a5a; }
+  .tag { background: #14263d; color: #cfe3ff; border-color: #64b0ff; }
   .box.warn { border-color: #d9a400; }
 }
+

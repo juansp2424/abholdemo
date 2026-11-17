@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import {
+  QUICK_CATEGORY_MAX_COUNT,
+  QUICK_CATEGORY_MAX_LENGTH,
   SLOT_LENGTH_OPTIONS,
   WEEKDAYS,
   type BusinessSettings,
@@ -46,7 +48,25 @@ function parseOpeningHours(value: unknown): OpeningHours {
   return result;
 }
 
-function parseSettings(body: unknown, webname: string): BusinessSettings {
+function parseQuickCategories(value: unknown): string[] {
+  if (!Array.isArray(value)) return invalid("Die Schnellauswahl ist nicht gültig.");
+  if (value.length > QUICK_CATEGORY_MAX_COUNT) invalid(`Die Schnellauswahl darf höchstens ${QUICK_CATEGORY_MAX_COUNT} Einträge haben.`);
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const raw of value) {
+    const text = typeof raw === "string" ? raw.trim().replace(/\s+/g, " ") : "";
+    if (text.length < 1 || text.length > QUICK_CATEGORY_MAX_LENGTH) {
+      invalid(`Jeder Eintrag der Schnellauswahl muss 1 bis ${QUICK_CATEGORY_MAX_LENGTH} Zeichen lang sein.`);
+    }
+    const key = text.toLocaleLowerCase("de-DE");
+    if (seen.has(key)) invalid(`"${text}" steht schon in der Schnellauswahl.`);
+    seen.add(key);
+    result.push(text);
+  }
+  return result;
+}
+
+function parseSettings(body: unknown, webname: string, current: BusinessSettings): BusinessSettings {
   const b = asObject(body);
   const name = optText(b.name, "Der Name des Betriebs", 60);
   if (!name) invalid("Bitte geben Sie den Namen des Betriebs an.");
@@ -87,6 +107,7 @@ function parseSettings(body: unknown, webname: string): BusinessSettings {
     pickupDeadlineDays: days as number,
     defaultChannel: b.defaultChannel as Channel,
     messageTemplate: template,
+    quickCategories: b.quickCategories === undefined ? current.quickCategories : parseQuickCategories(b.quickCategories),
   };
 }
 
@@ -97,7 +118,7 @@ export function settingsRoutes(app: FastifyInstance, ctx: Ctx) {
   app.get("/api/betrieb/settings", guard, async () => db().settings);
 
   app.put("/api/betrieb/settings", guard, async (req) => {
-    db().settings = parseSettings(req.body, db().settings.webname);
+    db().settings = parseSettings(req.body, db().settings.webname, db().settings);
     return db().settings;
   });
 

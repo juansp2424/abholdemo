@@ -44,7 +44,7 @@ export function makeEnv(over: Partial<BuildAppOptions> = {}): TestEnv {
   return env;
 }
 
-export const PUB = "/api/public/b/schuster-demo";
+export const PUB = "/api/public/b/werkstatt-demo";
 
 /** Creates an order via the staff API and returns its detail. */
 export async function createOrder(env: TestEnv, token: string, body: Record<string, unknown> = { item: "Testschuh" }) {

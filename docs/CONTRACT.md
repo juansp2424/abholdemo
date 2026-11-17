@@ -99,7 +99,7 @@ Owner only (`INHABER`), else `403 FORBIDDEN` "Nur für Inhaber.": settings and s
 * `q`: case insensitive; matches if `normalizeCode(q)` is contained in the code, or `q` is contained in `customerName`.
 
 ```json
-[{ "id": "o5", "code": "7KP4QX", "item": "Stiefel, Sohle erneuern", "customerName": "Jonas Probe", "status": "ABHOLBEREIT", "ageDays": 6, "createdAt": "2026-11-09T10:00:00.000Z", "slot": { "start": "2026-11-15T14:30:00.000Z", "end": "2026-11-15T14:45:00.000Z" }, "hasPhoto": false, "notify": true }]
+[{ "id": "o5", "code": "7KP4QX", "item": "Auto, Ölwechsel", "customerName": "Jonas Probe", "status": "ABHOLBEREIT", "ageDays": 6, "createdAt": "2026-11-09T10:00:00.000Z", "slot": { "start": "2026-11-15T14:30:00.000Z", "end": "2026-11-15T14:45:00.000Z" }, "hasPhoto": false, "notify": true }]
 ```
 
 `POST /api/betrieb/orders` body `CreateOrderRequest` → `201 OrderDetail`. Only `item` is required. Validation errors → `400 VALIDATION` with a German message naming the field. Email: simple `x@y.z` check. Phone: digits, spaces, leading `+`, 6 to 20 digits. Photo saved as a file in `packages/api/data/photos/<orderId>.<ext>`.
@@ -118,13 +118,16 @@ Owner only (`INHABER`), else `403 FORBIDDEN` "Nur für Inhaber.": settings and s
 
 ```json
 { "month": "2026-11", "monthCount": 3, "monthTotalEur": 0.1206,
-  "messages": [{ "id": "m3", "orderId": "o7", "orderCode": "RT8WMZ", "type": "ERINNERUNG", "channel": "SMS", "recipientMasked": "+49 *** ****34", "text": "Guten Tag, ...", "link": "http://localhost:5174/b/schuster-demo/a/RT8WMZ", "deliveryStatus": "ZUGESTELLT_SIMULIERT", "costEur": 0.075, "createdAt": "...", "stopSimulated": false }],
+  "messages": [{ "id": "m3", "orderId": "o7", "orderCode": "RT8WMZ", "type": "ERINNERUNG", "channel": "SMS", "recipientMasked": "+49 *** ****34", "text": "Guten Tag, ...", "link": "http://localhost:5174/b/werkstatt-demo/a/RT8WMZ", "deliveryStatus": "ZUGESTELLT_SIMULIERT", "costEur": 0.075, "createdAt": "...", "stopSimulated": false }],
   "perOrder": [{ "orderId": "o7", "orderCode": "RT8WMZ", "count": 2 }] }
 ```
 
 `POST /api/betrieb/messages/:id/simulate-stop` (demo, SMS or WhatsApp only, else `409 NOT_ALLOWED`) → `200 MessageView`. Revokes the order's subscription with source `STOP`, appends a `WIDERRUF` consent event.
 
 ### 6.5 Settings and staff (owner only)
+
+`BusinessSettings.quickCategories` (string[]): the quick selection chips for new orders. Empty by default, nothing is predefined. Owner defined, max 20 entries of 1 to 40 chars, trimmed, duplicates (case insensitive) rejected with 400. If the field is missing in a PUT the current list is kept. `GET /api/betrieb/business` returns the same list (`BusinessInfo.quickCategories`) so every staff member sees the chips.
+
 
 `GET /api/betrieb/settings` → `BusinessSettings`. `PUT /api/betrieb/settings` body `BusinessSettings` (webname ignored) → `200 BusinessSettings` or `400 VALIDATION`.
 `POST /api/betrieb/settings/preview` body `{ "template": string }` → `{ "text": string }` (rendered with sample code `ABC234` and the business name, plus the MAIL suffix).
@@ -164,18 +167,18 @@ Slot generation: for each of the next 7 calendar days including today (demo cloc
 
 ## 7. Seed (R4)
 
-Business `Schuhmacher Demo`, webname `schuster-demo`, hours Mo to Fr 09:00 to 13:00 and 14:00 to 18:00, Sa 09:00 to 13:00, So closed. Slot length 15, capacity 2, deadline 14 days, default channel MAIL, default template.
+Business `Werkstatt Demo`, webname `werkstatt-demo`, hours Mo to Fr 09:00 to 13:00 and 14:00 to 18:00, Sa 09:00 to 13:00, So closed. Slot length 15, capacity 2, deadline 14 days, default channel MAIL, default template.
 
-Staff (password for both `demo1234`): `inhaber` Maria Leisten (INHABER), `mitarbeiter` Tom Sohle (MITARBEITER). Stable ids `u1`, `u2`.
+Staff (password for both `demo1234`): `inhaber` Maria Leisten (INHABER), `mitarbeiter` Tom Werner (MITARBEITER). Stable ids `u1`, `u2`.
 
 Orders relative to seed time (all names and contacts invented, domains `beispiel.de`, phone numbers `+49 151 000000xx`):
 
 | Code | Status | Notes |
 |---|---|---|
-| `H7RT3K` | ANGENOMMEN | today, Absätze erneuern, Petra Beispiel, intake email, STATUSLINK message |
+| `H7RT3K` | ANGENOMMEN | today, Auto Winterreifen aufziehen, Petra Beispiel, intake email, STATUSLINK message |
 | `N4WZ8P` | ANGENOMMEN | 1 day, Tasche Naht, no name |
-| `Q9XB2M` | IN_ARBEIT | 2 days, Sohle erneuern, estimatedCompletion = tomorrow, subscription MAIL |
-| `C6VJ5T` | IN_ARBEIT | 4 days, Reißverschluss Stiefel, Klaus Muster |
+| `Q9XB2M` | IN_ARBEIT | 2 days, Fahrrad Bremsen einstellen, estimatedCompletion = tomorrow, subscription MAIL |
+| `C6VJ5T` | IN_ARBEIT | 4 days, Auto Klimaanlage prüfen, Klaus Muster |
 | `7KP4QX` | ABHOLBEREIT | ready 1 day ago, subscription MAIL, ABHOLBEREIT message, slot booked today at the next free slot of today (or next opening day) |
 | `D3FY6W` | ABHOLBEREIT | ready 2 days ago, no subscription |
 | `G8UE4R` | ABHOLBEREIT | ready 12 days ago, subscription WHATSAPP, ABHOLBEREIT message (advance 3 days makes it overdue + reminder) |

@@ -31,7 +31,7 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
 
   app.get("/api/betrieb/business", async (): Promise<BusinessInfo> => {
     const s = db().settings;
-    return { name: s.name, webname: s.webname, logoDataUrl: s.logoDataUrl, customerUrl: businessUrl(s.webname) };
+    return { name: s.name, webname: s.webname, logoDataUrl: s.logoDataUrl, customerUrl: businessUrl(s.webname), quickCategories: s.quickCategories ?? [] };
   });
 
   app.get("/api/betrieb/orders", async (req): Promise<OrderSummary[]> => {

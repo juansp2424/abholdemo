@@ -190,6 +190,7 @@ export interface BusinessSettings {
   pickupDeadlineDays: number; // 1..60
   defaultChannel: Channel; // preselected channel in the customer form
   messageTemplate: string; // 10..500 chars
+  quickCategories: string[]; // quick selection for new orders, owner defined, empty by default, max 20 entries of 1..40 chars
 }
 
 /** Basic business info for every logged in staff member. */
@@ -198,6 +199,7 @@ export interface BusinessInfo {
   webname: string;
   logoDataUrl: string | null;
   customerUrl: string; // businessUrl(webname), QR target
+  quickCategories: string[]; // same list as in settings, so every staff member sees the chips
 }
 
 export type Role = "INHABER" | "MITARBEITER";
@@ -241,15 +243,9 @@ export interface UpdateStaffRequest {
 // Orders (staff view)
 // ---------------------------------------------------------------------------
 
-export const QUICK_CATEGORIES = [
-  "Absätze erneuern",
-  "Sohle erneuern",
-  "Naht reparieren",
-  "Reißverschluss",
-  "Schlüssel",
-  "Tasche",
-  "Gürtel",
-] as const;
+/** Quick selection chips are configured per business (BusinessSettings.quickCategories). Nothing is predefined. */
+export const QUICK_CATEGORY_MAX_COUNT = 20;
+export const QUICK_CATEGORY_MAX_LENGTH = 40;
 
 export interface StatusLogEntry {
   at: string; // ISO

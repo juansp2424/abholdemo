@@ -48,7 +48,7 @@ export function App() {
       <main className="page">
         <h1>Auftrag abholen</h1>
         <p>Hier sehen Sie den Stand Ihres Auftrags. Es gibt in dieser Demo einen Betrieb.</p>
-        <Link to="/b/schuster-demo" className="btn">Zum Betrieb Schuhmacher Demo</Link>
+        <Link to="/b/werkstatt-demo" className="btn">Zum Betrieb Werkstatt Demo</Link>
       </main>
     );
   }

@@ -138,3 +138,12 @@ Siehe `docs/CONTRACT.md` und `packages/shared/src/index.ts`. Nur der Orchestrato
 * Entscheidung M9: Ein Programm auf demselben Rechner kann die Fehlversuchssperre umgehen, indem es direkt an 127.0.0.1:4000 einen wechselnden `X-Forwarded-For` Kopf schickt. Die API lauscht nur auf 127.0.0.1; von außen ist das nicht erreichbar. Für die lokale Demo als bekannte Grenze dokumentiert (README), kein Code geändert. In einem echten Betrieb würde nur der eigene Reverse Proxy die Client Adresse setzen.
 * Korrekturrunde 2: M5 an kunde.
 * Prüfagent Runde 3 (Abschluss): 40 erfüllt, 0 teilweise, 0 offen; M5 behoben, M9 als dokumentierte Grenze akzeptiert.
+
+## 8. Änderung: Generische Plattform für Fahrrad und Auto Werkstätten (2026-11-17)
+
+Neue Vorgabe des Auftraggebers, ersetzt den Schuhmacher Bezug aus dem Ursprungsprompt (R4 Seed, R14 Schnellauswahl):
+
+* **Schnellauswahl pro Betrieb:** Die fest eingebauten Schuhmacher Kategorien sind entfernt. Der Betrieb legt seine Schnellauswahl selbst an (Einstellungen, nur Inhaber), am Anfang ist sie leer. Neue Aufträge zeigen sie als Knöpfe; ohne Einträge steht ein Hinweis. Der Vertrag hat dafür `BusinessSettings.quickCategories` und `BusinessInfo.quickCategories`.
+* **Seed neutral:** Betrieb "Werkstatt Demo" (Webname `werkstatt-demo`), Seed Aufträge als Mischung aus Fahrrad und Auto, ohne Kategorien. Mitarbeiter heißt Tom Werner. Alte Daten bleiben beim Start erhalten (die Schnellauswahl wird als leer ergänzt); für den neuen Seed einmal "Demodaten zurücksetzen".
+* **Design:** Blau und Weiß statt Grün, ursprüngliche Systemschrift (Cambria wurde ausprobiert und auf Wunsch wieder entfernt), typisches Tech Blau (#2563eb) als Akzent. Statusfarben bleiben nach Bedeutung (Abholbereit grün, Überfällig orange).
+* **Unverändert:** Der Text "Nummer vom Anhänger eingeben" auf dem Aufsteller (R21) bleibt, weil er im Ursprungsprompt so steht.

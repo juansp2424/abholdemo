@@ -31,7 +31,7 @@ describe("messages", () => {
     expect(env.db().messages.filter((m) => m.orderId === revoked.id)).toHaveLength(0);
 
     // active subscription: exactly one
-    const sub = await createOrder(env, owner, { item: "Abo Schuh" });
+    const sub = await createOrder(env, owner, { item: "Abo Test" });
     await env.pub("POST", `${PUB}/orders/${sub.code}/subscribe`, { channel: "MAIL", contact: "kunde@beispiel.de", consent: true });
     await setStatus(env, owner, sub.id, "IN_ARBEIT");
     expect(env.db().messages.filter((m) => m.orderId === sub.id)).toHaveLength(0);
@@ -41,11 +41,11 @@ describe("messages", () => {
     const mine = env.db().messages.filter((m) => m.orderId === sub.id);
     expect(mine).toHaveLength(1);
     expect(mine[0]).toMatchObject({ type: "ABHOLBEREIT", channel: "MAIL", costEur: 0, recipient: "kunde@beispiel.de" });
-    const link = statusUrl("schuster-demo", sub.code);
+    const link = statusUrl("werkstatt-demo", sub.code);
     expect(mine[0].text).toContain(link);
-    expect(mine[0].text).toContain(`Ihr Auftrag ${sub.code} bei Schuhmacher Demo ist abholbereit`);
+    expect(mine[0].text).toContain(`Ihr Auftrag ${sub.code} bei Werkstatt Demo ist abholbereit`);
     expect(mine[0].text.endsWith(` Keine Nachricht mehr? Abbestellen: ${link}?abmelden=1`)).toBe(true);
-    expect(mine[0].text).not.toContain("Abo Schuh"); // never the item
+    expect(mine[0].text).not.toContain("Abo Test"); // never the item
   });
 
   it("uses the STOP suffix for SMS and WhatsApp and the template from the settings", async () => {
@@ -56,7 +56,7 @@ describe("messages", () => {
     await env.pub("POST", `${PUB}/orders/${o.code}/subscribe`, { channel: "WHATSAPP", contact: "+49 151 00000011", consent: true });
     await setStatus(env, owner, o.id, "ABHOLBEREIT");
     const m = env.db().messages.find((x) => x.orderId === o.id)!;
-    expect(m.text).toBe(`Hallo, ${o.code} ist fertig bei Schuhmacher Demo: ${statusUrl("schuster-demo", o.code)} Antworten Sie STOP, dann bekommen Sie keine Nachricht mehr.`);
+    expect(m.text).toBe(`Hallo, ${o.code} ist fertig bei Werkstatt Demo: ${statusUrl("werkstatt-demo", o.code)} Antworten Sie STOP, dann bekommen Sie keine Nachricht mehr.`);
   });
 
   it("sends the STATUSLINK on intake with an email, free of charge", async () => {
@@ -68,9 +68,9 @@ describe("messages", () => {
     const view = (await messages(env, owner)).messages.find((m: any) => m.orderId === o.id);
     expect(view).toMatchObject({
       type: "STATUSLINK", channel: "MAIL", recipientMasked: "k***@beispiel.de", costEur: 0,
-      deliveryStatus: "ZUGESTELLT_SIMULIERT", orderCode: o.code, link: statusUrl("schuster-demo", o.code),
+      deliveryStatus: "ZUGESTELLT_SIMULIERT", orderCode: o.code, link: statusUrl("werkstatt-demo", o.code),
     });
-    expect(view.text).toBe(`Guten Tag, Ihr Auftrag ${o.code} bei Schuhmacher Demo ist angenommen. Den Stand sehen Sie hier: ${statusUrl("schuster-demo", o.code)}`);
+    expect(view.text).toBe(`Guten Tag, Ihr Auftrag ${o.code} bei Werkstatt Demo ist angenommen. Den Stand sehen Sie hier: ${statusUrl("werkstatt-demo", o.code)}`);
     expect(view.text).not.toContain("Mit Mail");
     // the intake mail does not subscribe the customer to the ready message
     await setStatus(env, owner, o.id, "ABHOLBEREIT");

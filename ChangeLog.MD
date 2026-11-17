@@ -4,7 +4,7 @@ Wichtige Änderungen an der Betriebs App (`apps/betrieb`) und der Kundenwebsite 
 
 Die Zahl hinter dem Datum ist der Commit im Repo, damit sich jede Änderung nachvollziehen lässt (`git show <Commit>`). Planung und Begründungen stehen in `docs/PLAN.md`, der Vertrag zwischen den Teilen in `docs/CONTRACT.md`, die Prüfberichte in `docs/REVIEW.md`.
 
-## 2026-11-17: Schnellauswahl der Demo gespeichert (Commit folgt)
+## 2026-11-17: Schnellauswahl der Demo gespeichert (`6c856be`)
 
 **Betriebs App**
 * Beim neuen Auftrag erscheinen von Anfang an zwei Knöpfe: "Wartung Paket 1" und "Reifenwechsel (Sommer) mit Einlagerung". Der Inhaber kann sie in den Einstellungen ändern, löschen oder ergänzen.

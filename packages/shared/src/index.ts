@@ -14,7 +14,9 @@
 export const PORTS = { api: 4000, betrieb: 5173, kunde: 5174 } as const;
 
 /** Base URL of the customer website. Used for status links, QR code and messages. */
-export const KUNDE_BASE_URL = `http://localhost:${PORTS.kunde}`;
+const env = globalThis as unknown as { process?: { env: Record<string, string | undefined> } };
+const viteEnv = (import.meta as unknown as { env?: Record<string, string> }).env;
+export const KUNDE_BASE_URL: string = (viteEnv?.VITE_KUNDE_URL ?? env.process?.env.KUNDE_URL ?? `http://localhost:${PORTS.kunde}`).replace(/\/$/, "");
 
 /** Central customer page for an order. One address for all businesses: the code alone identifies the business. Used in messages and QR codes. */
 export function orderUrl(code: string): string {

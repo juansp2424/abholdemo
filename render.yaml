@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: abholdemo-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev
+    startCommand: npm start -w @abholdemo/api
+    envVars:
+      - key: TRUST_PROXY
+        value: "1"
+      - key: KUNDE_URL        # Cloudflare Pages Adresse der Kundenwebsite
+        sync: false
+      - key: CORS_ORIGINS     # beide Pages Adressen, kommagetrennt
+        sync: false
+      - key: DATABASE_URL     # optional: Supabase, sonst Seed Daten nach jedem Neustart
+        sync: false

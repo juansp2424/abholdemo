@@ -12,7 +12,7 @@ import { orderRoutes } from "./routes/orders.js";
 import { publicRoutes } from "./routes/public.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { seed } from "./seed.js";
-import { Store } from "./store.js";
+import { Store, type RemoteDb } from "./store.js";
 import { HttpError } from "./validation.js";
 
 export interface BuildAppOptions {
@@ -24,11 +24,13 @@ export interface BuildAppOptions {
   /** Minimum duration of public order lookups. Default PUBLIC_LOOKUP_MIN_MS. */
   lookupMinMs?: number;
   logger?: boolean;
+  /** Supabase persistence; replaces the JSON file when set. */
+  remote?: RemoteDb;
 }
 
 export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
   const base = opts.clock ?? systemClock;
-  const store = new Store(opts.dbFile ?? null, () => seed(base.now()));
+  const store = new Store(opts.dbFile ?? null, () => seed(base.now()), opts.remote);
   const now = () => base.now() + store.db.offsetDays * DAY_MS;
   const ctx: Ctx = {
     store,
@@ -50,6 +52,21 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
       done(null, JSON.parse(body as string));
     } catch {
       done(new HttpError(400, "VALIDATION", "Die Anfrage ist nicht lesbar."), undefined);
+    }
+  });
+
+  // CORS for the hosted frontends (bearer token auth, no cookies). CORS_ORIGINS: comma separated list.
+  const origins = (process.env.CORS_ORIGINS ?? "").split(",").map((o) => o.trim().replace(/\/$/, "")).filter(Boolean);
+  app.addHook("onRequest", async (req, reply) => {
+    const origin = req.headers.origin;
+    if (!origin || !origins.includes(origin)) return;
+    reply.header("Access-Control-Allow-Origin", origin).header("Vary", "Origin");
+    if (req.method === "OPTIONS") {
+      return reply
+        .header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE")
+        .header("Access-Control-Allow-Headers", "Authorization,Content-Type")
+        .code(204)
+        .send();
     }
   });
 

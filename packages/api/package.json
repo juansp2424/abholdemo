@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@abholdemo/shared": "*",
-    "fastify": "^5.2.0"
+    "fastify": "^5.2.0",
+    "postgres": "^4.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

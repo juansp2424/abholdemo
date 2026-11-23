@@ -1,12 +1,17 @@
 import { fileURLToPath } from "node:url";
 import { PORTS } from "@abholdemo/shared";
 import { buildApp } from "./app.js";
+import { connectSupabase } from "./supabase.js";
 
 const dbFile = process.env.DB_FILE ?? fileURLToPath(new URL("../data/db.json", import.meta.url));
-const app = buildApp({ dbFile, logger: true });
+const remote = process.env.DATABASE_URL ? await connectSupabase(process.env.DATABASE_URL) : undefined;
+const app = buildApp({ dbFile, logger: true, remote });
 
-app.listen({ host: "127.0.0.1", port: PORTS.api }).then(
-  () => console.log(`API läuft auf http://127.0.0.1:${PORTS.api}`),
+const host = process.env.PORT ? "0.0.0.0" : "127.0.0.1"; // hosted: Render sets PORT
+const port = Number(process.env.PORT) || PORTS.api;
+
+app.listen({ host, port }).then(
+  () => console.log(`API läuft auf http://${host}:${port}`),
   (err) => {
     console.error(err);
     process.exit(1);

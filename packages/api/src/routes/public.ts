@@ -34,7 +34,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export function clientKey(req: FastifyRequest): string {
   const addr = req.raw.socket.remoteAddress ?? "unknown";
   const loopback = addr === "127.0.0.1" || addr === "::1" || addr.startsWith("::ffff:127.");
-  if (loopback) {
+  if (loopback || process.env.TRUST_PROXY) {
     const xff = req.headers["x-forwarded-for"];
     const raw = Array.isArray(xff) ? xff.join(",") : xff;
     const last = raw?.split(",").at(-1)?.trim();

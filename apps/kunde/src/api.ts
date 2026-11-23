@@ -23,10 +23,12 @@ export class ApiFailure extends Error {
   }
 }
 
+const API_BASE: string = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_URL ?? ""; // empty locally (Vite proxy), Render URL when hosted
+
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(path, {
+    res = await fetch(API_BASE + path, {
       method,
       credentials: "omit",
       headers: body === undefined ? undefined : { "Content-Type": "application/json" },

@@ -34,6 +34,8 @@ export function onUnauthorized(fn: () => void): void {
   unauthorizedHandler = fn;
 }
 
+const API_BASE: string = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_URL ?? ""; // empty locally (Vite proxy), Render URL when hosted
+
 export async function api<T>(method: string, path: string, body?: unknown, auth = true): Promise<T> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -42,7 +44,7 @@ export async function api<T>(method: string, path: string, body?: unknown, auth 
 
   let res: Response;
   try {
-    res = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+    res = await fetch(API_BASE + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch {
     throw new RequestError("Der Server ist gerade nicht erreichbar. Bitte versuchen Sie es gleich noch einmal.", 0, "NETWORK");
   }

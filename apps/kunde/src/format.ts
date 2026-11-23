@@ -17,3 +17,6 @@ export function formatRange(s: { start: string; end: string }): string {
 
 /** Heading for a slot day. No "Heute"/"Morgen": days[0] is not reliably today (closed days are omitted). */
 export const dayHeading = (date: string) => formatDate(date);
+
+const euroFmt = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
+export const formatEuro = (cents: number) => euroFmt.format(cents / 100);

@@ -176,6 +176,29 @@ Slot generation: for each of the next 7 calendar days including today (demo cloc
 
 `DELETE /api/public/b/:webname/orders/:code/slot` → `PublicOrderView` (booking removed).
 
+### 6.8 Cost estimates (Kostenvoranschlag)
+
+Types in `packages/shared`: `EstimateView`, `CreateEstimateRequest`, `DecideEstimateRequest`, `PublicEstimate`. `OrderSummary.estimateState` (newest estimate), `OrderDetail.estimates` (oldest first) and `canEstimate`, `PublicOrderView.estimateState` (state only, never amount or text). Order filter `freigabe` lists orders whose newest estimate is `OFFEN`.
+
+Staff (any logged in staff):
+
+* `POST /api/betrieb/orders/:id/estimate` body `{ amountCents, description, validUntil?, channel: "MAIL" | "WHATSAPP" }` → `201 OrderDetail`. Amount: integer 1 to 10 000 000 cents. Description 1 to 300 chars. `validUntil` default today + 7 days, not in the past. `MAIL` needs a stored email, `WHATSAPP` the stored phone number (`400 VALIDATION` otherwise). Only for `ANGENOMMEN` and `IN_ARBEIT` (`409 NOT_ALLOWED`). An open estimate is replaced: it becomes `ZURUECKGEZOGEN`, the new one gets the next `version`. Creates a message `KOSTENVORANSCHLAG`.
+* `POST /api/betrieb/orders/:id/estimate/withdraw` → `OrderDetail`; `409` without an open estimate.
+* `POST /api/betrieb/orders/:id/estimate/decide` body `{ decision: "FREIGEGEBEN" | "ABGELEHNT" }` → `OrderDetail`; for answers by phone or in the shop (`decidedVia: "BETRIEB"`, no message); `409` without an open estimate.
+
+Customer (central page only, no auth, no cookies; the digits go in the body, never in a URL):
+
+* `POST /api/public/orders/:code/estimate` body `{ phoneEnd }` → `PublicEstimate` `{ version, amountCents, description, validUntil, state, decidedAt }` of the newest estimate. Wrong digits, unknown code or no estimate: neutral `404`, counted towards the lock like `lookup`.
+* `POST /api/public/orders/:code/estimate/decision` body `{ phoneEnd, version, decision }` → `PublicEstimate`. Only for the open estimate with that `version` (`409 NOT_ALLOWED` otherwise, also after expiry or when already decided). Sets `decidedVia: "KUNDENSEITE"` and creates `KV_ENTSCHEIDUNG` on the channel of the estimate.
+
+Messages (never contain amount, description, item or name; no STOP suffix; channel `MAIL` or `WHATSAPP` as chosen):
+
+* `KOSTENVORANSCHLAG`: `Guten Tag, zu Ihrem Auftrag {nummer} bei {betrieb} liegt ein Kostenvoranschlag vor. Bitte prüfen und freigeben oder ablehnen bis {TT.MM.JJJJ}: {link}`
+* `KV_ERINNERUNG` (once, from one day before the end): `Guten Tag, zu Ihrem Auftrag {nummer} bei {betrieb} wartet ein Kostenvoranschlag auf Ihre Antwort. Er gilt bis {TT.MM.JJJJ}: {link}`
+* `KV_ENTSCHEIDUNG`: `Guten Tag, wir haben Ihre Entscheidung zu Auftrag {nummer} bei {betrieb} erhalten: Kostenvoranschlag {freigegeben|abgelehnt}. Den Stand sehen Sie hier: {link}`
+
+Lifecycle: the sweep before every API request sets `ABGELAUFEN` after the last valid day and creates the reminder. A status change to `ABHOLBEREIT`, `ABGEHOLT` or `STORNIERT` withdraws an open estimate. Old data files get `estimates: []` on load.
+
 ## 7. Seed (R4)
 
 Business `Werkstatt Demo`, webname `werkstatt-demo`, hours Mo to Fr 09:00 to 13:00 and 14:00 to 18:00, Sa 09:00 to 13:00, So closed. Slot length 15, capacity 2, deadline 14 days, default channel MAIL, default template.

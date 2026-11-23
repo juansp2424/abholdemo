@@ -120,10 +120,10 @@ describe("messages", () => {
     expect(oct.monthCount).toBe(2);
     expect(oct.monthTotalEur).toBe(0.1206);
     for (const m of oct.messages) expect(m.costEur).toBe(CHANNEL_COST_EUR[m.channel as "SMS" | "WHATSAPP"]);
-    // current month starts with one seed SMS reminder
+    // current month starts with one seed SMS reminder and the seed cost estimate messages (WhatsApp 3 x 0.0456, one free mail)
     const start = await messages(env, owner);
     expect(start.month).toBe("2026-11");
-    expect(start.monthTotalEur).toBe(0.075);
+    expect(start.monthTotalEur).toBe(0.2118);
     const channels = [["SMS", "+49 151 00000021"], ["WHATSAPP", "+49 151 00000022"], ["MAIL", "k@beispiel.de"]] as const;
     for (const [channel, contact] of channels) {
       const o = await createOrder(env, owner, { item: "Kosten", customerEmail: "intake@beispiel.de" }); // intake mail is free
@@ -132,7 +132,7 @@ describe("messages", () => {
     }
     const now = await messages(env, owner);
     expect(now.monthCount).toBe(start.monthCount + 6); // three intake mails (free) and three ready messages
-    expect(now.monthTotalEur).toBe(0.075 + 0.075 + 0.0456); // 0.1956
+    expect(now.monthTotalEur).toBe(0.3324); // 0.2118 + SMS 0.075 + WhatsApp 0.0456
     const costs = now.messages.filter((m: any) => m.type === "ABHOLBEREIT").map((m: any) => [m.channel, m.costEur]);
     expect(costs).toEqual(expect.arrayContaining([["SMS", 0.075], ["WHATSAPP", 0.0456], ["MAIL", 0]]));
     expect(now.messages[0].recipientMasked).toMatch(/\*\*\*/);

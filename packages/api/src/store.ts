@@ -56,9 +56,11 @@ export class Store {
     if (remote?.initial) {
       this.db = remote.initial;
       this.db.settings.quickCategories ??= [];
+      for (const o of this.db.orders) o.estimates ??= []; // data from before cost estimates existed
     } else if (!remote && dbFile && existsSync(dbFile)) {
       this.db = JSON.parse(readFileSync(dbFile, "utf8")) as Db;
       this.db.settings.quickCategories ??= []; // data files from before the quick selection existed
+      for (const o of this.db.orders) o.estimates ??= []; // ... and before cost estimates existed
     } else {
       this.db = seedFn();
       this.save();

@@ -34,7 +34,9 @@ describe("seed", () => {
 
   it("creates the expected messages and uses invented contact data only", () => {
     const types = (code: string) => db.messages.filter((m) => m.orderId === by(code).id).map((m) => m.type);
-    expect(types("H7RT3K")).toEqual(["STATUSLINK"]);
+    expect(types("H7RT3K")).toEqual(["STATUSLINK", "KOSTENVORANSCHLAG"]);
+    expect(types("Q9XB2M")).toEqual(["KOSTENVORANSCHLAG"]);
+    expect(types("C6VJ5T")).toEqual(["KOSTENVORANSCHLAG", "KV_ENTSCHEIDUNG"]);
     expect(types("7KP4QX")).toEqual(["ABHOLBEREIT"]);
     expect(types("G8UE4R")).toEqual(["ABHOLBEREIT"]);
     expect(types("RT8WMZ")).toEqual(["ABHOLBEREIT", "ERINNERUNG"]);
@@ -56,7 +58,7 @@ describe("seed", () => {
   it("seeds a fresh app and a reseed is stable", async () => {
     const env = makeEnv();
     expect(env.db().orders).toHaveLength(10);
-    expect(env.db().messages).toHaveLength(5);
+    expect(env.db().messages).toHaveLength(9);
   });
 
   it("books the next opening day when today has no slots left", () => {

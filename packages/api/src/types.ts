@@ -3,6 +3,9 @@ import type {
   ConsentEvent,
   DeliveryStatus,
   Channel,
+  EstimateChannel,
+  EstimateDecisionSource,
+  EstimateState,
   MessageType,
   OrderStatus,
   SlotBooking,
@@ -13,6 +16,19 @@ import type {
 
 export interface UserRec extends StaffUser {
   passwordHash: string;
+}
+
+export interface EstimateRec {
+  version: number;
+  amountCents: number;
+  description: string;
+  validUntil: string; // YYYY-MM-DD
+  state: EstimateState;
+  channel: EstimateChannel;
+  sentAt: string;
+  decidedAt: string | null;
+  decidedVia: EstimateDecisionSource | null;
+  reminderSent: boolean;
 }
 
 export interface MessageRec {
@@ -50,6 +66,7 @@ export interface OrderRec {
   booking: SlotBooking | null; // at most one per order
   readyMessageSent: boolean;
   reminderSent: boolean;
+  estimates: EstimateRec[]; // oldest first, at most one OFFEN
 }
 
 export interface Db {

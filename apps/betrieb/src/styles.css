@@ -489,3 +489,16 @@ input[type="file"] { border: 0; padding: 4px 0; min-height: 0; box-shadow: none;
 @media (prefers-reduced-motion: reduce) { .btn:active, .chip:active, .nav-item:active, .cal-bar:active { filter: none; } }
 input[type="file"]::file-selector-button { font: inherit; font-weight: 600; min-height: 32px; padding: 4px 16px; margin-right: 10px; border: 1px solid var(--border); border-radius: 2px; background: var(--surface); color: var(--label); cursor: pointer; }
 input[type="file"]::file-selector-button:hover { background: var(--fill); border-color: var(--label-2); }
+
+/* Cost estimate */
+.est-tag { display: inline-block; padding: 1px 8px; border-radius: 2px; font-weight: 600; font-size: 12px; white-space: nowrap; }
+.est-OFFEN { background: var(--orange-tint); color: var(--orange-text); }
+.est-FREIGEGEBEN { background: var(--green-tint); color: var(--green-text); }
+.est-ABGELEHNT { background: var(--red-tint); color: var(--red-text); }
+.est-ZURUECKGEZOGEN, .est-ABGELAUFEN { background: var(--fill); color: var(--label-2); }
+.est-amount { font-size: 28px; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; }
+.est-open { display: flex; flex-direction: column; gap: 8px; }
+fieldset.field { border: 0; padding: 0; margin: 0; min-width: 0; }
+fieldset.field legend { font-weight: 600; padding: 0; margin-bottom: 4px; }
+.check input[type="radio"] { width: 18px; height: 18px; min-height: 0; padding: 0; flex: none; accent-color: var(--blue); box-shadow: none; }
+fieldset.field { display: flex; flex-direction: column; gap: 4px; }

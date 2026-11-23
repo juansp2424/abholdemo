@@ -1,6 +1,6 @@
 import { DEFAULT_MESSAGE_TEMPLATE, type BusinessSettings, type Channel, type OrderStatus } from "@abholdemo/shared";
 import { DAY_MS, iso } from "./clock.js";
-import { addMessage, addSubscription, logStatus, SYSTEM_ACTOR, type Actor } from "./domain.js";
+import { addMessage, addSubscription, germanDate, logStatus, SYSTEM_ACTOR, type Actor } from "./domain.js";
 import { hashPassword } from "./password.js";
 import { firstFreeSlot, lastPastSlot } from "./slots.js";
 import type { Db, OrderRec } from "./types.js";
@@ -95,6 +95,7 @@ export function seed(now: number): Db {
       booking: null,
       readyMessageSent: false,
       reminderSent: false,
+      estimates: [],
     };
     logStatus(o, s.createdAt, null, "ANGENOMMEN", s.creator ?? u2);
     for (const [to, at, actor] of s.steps) {
@@ -154,7 +155,7 @@ export function seed(now: number): Db {
   });
   if (pastSlot) za.booking = { start: iso(pastSlot.start), end: iso(pastSlot.end), bookedAt: iso(ago(1)), released: true };
 
-  make({
+  const kl = make({
     code: "C6VJ5T", item: "Auto, Klimaanlage prüfen", category: null, name: "Klaus Muster",
     createdAt: ago(4, 2), steps: [["IN_ARBEIT", ago(3), u2]],
   });
@@ -182,6 +183,27 @@ export function seed(now: number): Db {
   addMessage(db, kp, "ABHOLBEREIT", "MAIL", "jonas@beispiel.de", Date.parse(kp.readyAt!));
   kp.readyMessageSent = true;
   addMessage(db, ht, "STATUSLINK", "MAIL", "petra@beispiel.de", Date.parse(ht.createdAt));
+
+  // Cost estimates: one open by mail, one open by WhatsApp, one already approved by the customer.
+  function estimate(
+    o: OrderRec,
+    e: { cents: number; text: string; channel: "MAIL" | "WHATSAPP"; sentAt: number; validDays: number; decided?: { state: "FREIGEGEBEN" | "ABGELEHNT"; at: number } },
+  ) {
+    const to = e.channel === "MAIL" ? o.customerEmail! : o.customerPhone!;
+    const validUntil = day(now + e.validDays * DAY_MS);
+    o.estimates.push({
+      version: 1, amountCents: e.cents, description: e.text, validUntil, state: e.decided?.state ?? "OFFEN", channel: e.channel,
+      sentAt: iso(e.sentAt), decidedAt: e.decided ? iso(e.decided.at) : null, decidedVia: e.decided ? "KUNDENSEITE" : null, reminderSent: false,
+    });
+    addMessage(db, o, "KOSTENVORANSCHLAG", e.channel, to, e.sentAt, germanDate(validUntil));
+    if (e.decided) addMessage(db, o, "KV_ENTSCHEIDUNG", e.channel, to, e.decided.at, e.decided.state === "FREIGEGEBEN" ? "freigegeben" : "abgelehnt");
+  }
+  estimate(qx, { cents: 18990, text: "Bremsbeläge vorne und hinten ersetzen, Bremsflüssigkeit wechseln.", channel: "MAIL", sentAt: ago(0, 5), validDays: 6 });
+  estimate(ht, { cents: 34900, text: "Neuer Reifensatz (4 Stück) inklusive Montage und Wuchten.", channel: "WHATSAPP", sentAt: ago(0, 1), validDays: 7 });
+  estimate(kl, {
+    cents: 12900, text: "Klimaservice mit Kältemittel auffüllen und neuem Innenraumfilter.", channel: "WHATSAPP", sentAt: ago(2, 2), validDays: 3,
+    decided: { state: "FREIGEGEBEN", at: ago(1, 20) },
+  });
 
   // 7KP4QX has a booked slot: next free slot of today, or the next opening day.
   const slot = firstFreeSlot(db.settings, now, db.orders);

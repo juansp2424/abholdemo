@@ -42,6 +42,13 @@ export function buildMessageText(
       return renderTemplate(settings.messageTemplate, vars) + unsubscribeSuffix(channel, link);
     case "MITTEILUNG":
       return `Mitteilung zu Ihrem Auftrag ${code} von ${settings.name}: ${freeText} Den Stand sehen Sie hier: ${link}`;
+    // Cost estimate messages never contain the amount or the description; freeText is a date or a word.
+    case "KOSTENVORANSCHLAG":
+      return `Guten Tag, zu Ihrem Auftrag ${code} bei ${settings.name} liegt ein Kostenvoranschlag vor. Bitte prüfen und freigeben oder ablehnen bis ${freeText}: ${link}`;
+    case "KV_ERINNERUNG":
+      return `Guten Tag, zu Ihrem Auftrag ${code} bei ${settings.name} wartet ein Kostenvoranschlag auf Ihre Antwort. Er gilt bis ${freeText}: ${link}`;
+    case "KV_ENTSCHEIDUNG":
+      return `Guten Tag, wir haben Ihre Entscheidung zu Auftrag ${code} bei ${settings.name} erhalten: Kostenvoranschlag ${freeText}. Den Stand sehen Sie hier: ${link}`;
     case "ERINNERUNG":
       return (
         `Guten Tag, Ihr Auftrag ${code} bei ${settings.name} liegt zur Abholung bereit. ` +

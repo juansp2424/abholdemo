@@ -5,6 +5,7 @@ import type { MessageView, OrderDetail, OrderStatus } from "@abholdemo/shared";
 import { api, errorMessage } from "../api";
 import { formatDayShort, formatDateTime, formatSlot } from "../format";
 import { Alert, PageHeader, StatusBadge, useLoad } from "../ui";
+import { EstimateSection } from "./Estimate";
 
 export function OrderDetailScreen({ id }: { id: string }) {
   const { data, error, setData } = useLoad(() => api<OrderDetail>("GET", `/api/betrieb/orders/${encodeURIComponent(id)}`), [id]);
@@ -36,13 +37,14 @@ export function OrderDetailScreen({ id }: { id: string }) {
       </PageHeader>
       <Alert message={error} />
       {!data && !error ? <p className="muted">Auftrag wird geladen.</p> : null}
-      {data ? <Body o={data} refresh={refresh} busy={busy} change={change} confirmCancel={confirmCancel} setConfirmCancel={setConfirmCancel} actionError={actionError} /> : null}
+      {data ? <Body o={data} setO={setData} refresh={refresh} busy={busy} change={change} confirmCancel={confirmCancel} setConfirmCancel={setConfirmCancel} actionError={actionError} /> : null}
     </>
   );
 }
 
 function Body(props: {
   o: OrderDetail;
+  setO: (o: OrderDetail) => void;
   refresh: () => Promise<void>;
   busy: boolean;
   change: (s: OrderStatus) => void;
@@ -50,7 +52,7 @@ function Body(props: {
   setConfirmCancel: (v: boolean) => void;
   actionError: string | null;
 }) {
-  const { o, refresh, busy, change, confirmCancel, setConfirmCancel, actionError } = props;
+  const { o, setO, refresh, busy, change, confirmCancel, setConfirmCancel, actionError } = props;
   const canReady = o.allowedTransitions.includes("ABHOLBEREIT");
   const others = o.allowedTransitions.filter((s) => s !== "ABHOLBEREIT");
   const sub = o.subscription;
@@ -107,6 +109,8 @@ function Body(props: {
       ) : (
         <p className="muted">Dieser Auftrag ist abgeschlossen. Der Status kann nicht mehr geändert werden.</p>
       )}
+
+      <EstimateSection o={o} onChange={setO} />
 
       {o.photoDataUrl ? (
         <section className="card">

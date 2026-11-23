@@ -185,3 +185,67 @@ Idee des Auftraggebers: Ein gedruckter Aufsteller für alle Betriebe (zum Beispi
 * **Statuslink bei der Annahme per SMS**, wenn keine Mailadresse erfasst ist (Telefonnummer ist Pflicht). Ändert R27. SMS kostet 0,075 Euro je Auftrag, das steht in der Nachrichtenübersicht.
 * **Codes sind plattformweit eindeutig:** Die Prüfung beim Anlegen läuft gegen alle gespeicherten Aufträge. In der Demo gibt es einen Betrieb; für mehrere Betriebe muss das Datenmodell eine Betriebsnummer je Auftrag bekommen und die Eindeutigkeit als Datenbankregel gelten.
 * **Ehrliche Grenze der vier Ziffern:** Sie schützen nur die Eingabe von Hand. Der Link `/a/<Nummer>` (aus Nachrichten und vom QR Code) funktioniert bewusst ohne Ziffern, wie ein Paketlink. Wer Codes über die Schnittstelle durchprobiert, wird durch die Sperre (10 Fehlversuche pro Minute) und die Größe des Codes (rund 887 Millionen Möglichkeiten) gebremst, nicht durch die Ziffern. Die Statusseite zeigt keine persönlichen Daten. Wer Abholzeiten fremder Aufträge ändern könnte, bräuchte einen erratenen Code. Für den echten Betrieb sollte das mit längeren Codes oder einem geheimen Zusatz im Link verschärft werden.
+
+## 14. Geplant: Kostenvoranschlag per Mail oder WhatsApp (2026-11-23)
+
+Status: umgesetzt am 2026-11-23, mit den empfohlenen Entscheidungen (Betrag hinter dem Link mit vier Ziffern, Freigabe nur über die Kundenseite, ein Gesamtbetrag plus Text). Abweichungen vom Plan:
+
+* Die Erinnerung (`KV_ERINNERUNG`) kommt einen Tag vor Ende der Gültigkeit, nicht nach Ablauf. Der Voranschlag läuft nach dem letzten Gültigkeitstag ab.
+* Die Entscheidung steht mit Zeitpunkt und Weg im Verlauf des Kostenvoranschlags am Auftrag, nicht im Statusprotokoll (das bleibt den Statuswechseln vorbehalten).
+* Wird ein Auftrag abholbereit, abgeholt oder storniert, wird ein offener Voranschlag automatisch zurückgezogen.
+* Die Kundenseite zeigt den Voranschlag nur auf der zentralen Adresse `/a/<Nummer>`, nicht auf den alten Betriebsadressen `/b/...`.
+* Beispiele in der Demo: `Q9XB2M` (offen, Mail, Ziffern `0017`), `H7RT3K` (offen, WhatsApp, `0019`), `C6VJ5T` (vom Kunden freigegeben, WhatsApp, `0016`). Contract: `docs/CONTRACT.md` Abschnitt 6.8.
+
+Die folgende Beschreibung ist der ursprüngliche Plan.
+
+**Ablauf**
+
+1. Der Betrieb öffnet einen Auftrag (Angenommen oder In Arbeit), Abschnitt "Kostenvoranschlag": Betrag, Kurzbeschreibung (bis 300 Zeichen), gültig bis (Vorgabe heute plus 7 Tage), Kanal Mail oder WhatsApp, Vorschau.
+2. Der Kunde bekommt eine kurze Nachricht mit Link zur Statusseite. Der Betrag steht nicht in der Nachricht.
+3. Auf `/a/<Nummer>` gibt der Kunde die letzten vier Ziffern der Telefonnummer ein, sieht Betrag und Beschreibung und wählt **Freigeben** oder **Ablehnen**.
+4. Der Betrieb sieht die Entscheidung am Auftrag und in den Nachrichten. Eine telefonische Freigabe oder Ablehnung kann er selbst erfassen.
+
+**Datenmodell**
+
+* Pro Auftrag `estimates[]` mit Version, Betrag in Cent, Text, gültig bis, Zustand, Entscheidungsdatum und Weg (Link, Betrieb telefonisch).
+* Zustände: `OFFEN`, `FREIGEGEBEN`, `ABGELEHNT`, `ZURUECKGEZOGEN`, `ABGELAUFEN`. Höchstens ein offener Eintrag je Auftrag. Ein neuer ersetzt den offenen und bekommt die nächste Version (so entsteht ein Nachtrag bei Mehrkosten).
+* `OrderStatus` und `MANUAL_TRANSITIONS` bleiben unverändert. "Wartet auf Freigabe" ist nur eine Ableitung aus dem offenen Eintrag.
+* Alte Datendateien (JSON und Supabase) werden beim Laden mit `estimates ??= []` ergänzt.
+
+**Nachrichten**
+
+* Neue Arten: `KOSTENVORANSCHLAG`, `KV_ERINNERUNG` (höchstens eine, nach Ablauffrist), `KV_ENTSCHEIDUNG` (Bestätigung an den Kunden).
+* Kanal frei wählbar zwischen Mail (0,00 €) und WhatsApp (0,0456 €), angeboten nur mit vorhandenem Kontakt. SMS bleibt für die übrigen Nachrichten wie bisher. `contactChannel` in `packages/shared` muss dafür eine Auswahl zulassen.
+* Wie `MITTEILUNG`: eine ausdrückliche Handlung des Betriebs an den Kontakt der Annahme, ohne Eintrag auf der Kundenseite. Keine Nachricht bei Abgeholt und Storniert.
+* Nachrichtentexte enthalten weiter weder Gegenstand noch Namen noch Betrag.
+
+**Kundenseite**
+
+* Der Link allein zeigt nur "Es liegt ein Kostenvoranschlag vor". Betrag und Beschreibung erst nach den vier Ziffern. Es gilt dieselbe Fehlversuchssperre und dieselbe neutrale Antwort wie bei der Statusabfrage.
+* Eine Entscheidung ist endgültig und lässt sich nicht doppelt abschicken. Abgelaufen: "bitte beim Betrieb melden".
+
+**Betriebs App**
+
+* Auftrag: Formular, Zustand ("Wartet auf Freigabe seit …"), Knöpfe "Zurückziehen", "Neu senden", "Telefonisch freigegeben/abgelehnt".
+* Auftragsliste: neuer Filter "Wartet auf Freigabe", Hinweis am Auftrag.
+* Bei Ablehnung bleibt der Auftrag unverändert, die App weist auf die Entscheidung des Betriebs hin (stornieren oder ohne Reparatur zurückgeben). Bei Freigabe keine automatische Statusänderung, nur Verlaufseintrag.
+
+**Backend**
+
+* Neue Endpunkte: `/api/betrieb/orders/:id/estimate` (anlegen, zurückziehen, manuell entscheiden) und `/api/public/orders/:code/estimate/decision`. Eintrag im `CONTRACT.md`.
+* Ablauf und Erinnerung über die Prüfung vor jeder Anfrage und die Demouhr ("Zeit vorspulen" wirkt mit).
+* Seed: ein Auftrag mit offenem Voranschlag, "Demodaten zurücksetzen" stellt ihn wieder her.
+
+**Reihenfolge:** 1. Vertrag und Typen, 2. Backend mit Tests, 3. Betriebs App, 4. Kundenseite, 5. Seed, Demo, Doku. Geschätzt ein bis zwei Arbeitstage für die Demo.
+
+**Tests:** Anlegen, Ersetzen, Entscheiden, Ablauf, falsche Ziffern, kein Betrag in der Nachricht, Entscheidung nur einmal, keine Nachricht bei Abgeholt oder Storniert.
+
+**Offene Entscheidungen**
+
+1. Betrag hinter dem Link mit vier Ziffern (empfohlen) oder in der Nachricht.
+2. Freigabe nur über die Kundenseite (empfohlen) oder auch per WhatsApp-Antwort (erst mit echter Anbindung möglich).
+3. Ein Gesamtbetrag plus Text (empfohlen für die Demo) oder einzelne Positionen mit PDF-Anhang bei Mail.
+4. Verbindlich oder unverbindlich, Umgang mit Überschreitungen: rechtlich zu prüfen, die Demo bildet nur neue Versionen ab.
+5. Echtes WhatsApp: braucht WhatsApp-Business-Konto, von Meta freigegebene Nachrichtenvorlage und eine Einwilligung des Kunden bei der Annahme. Der jetzige Zustimmungstext (`CONSENT_TEXT`) deckt das nicht ab.
+
+**Nicht Teil dieses Plans:** Zahlung, digitale Unterschrift, PDF-Erzeugung.

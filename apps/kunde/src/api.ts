@@ -7,6 +7,9 @@ import type {
   LookupRequest,
   LookupResponse,
   PublicBusiness,
+  PublicEstimate,
+  PublicEstimateDecisionRequest,
+  PublicEstimateRequest,
   PublicOrderView,
   PublicSlotsResponse,
   SubscribeRequest,
@@ -74,3 +77,9 @@ export const getCentral = (code: string) => call<CentralOrderView>("GET", `/api/
 /** Central entry by hand: code plus the last digits of the phone number (sent in the body, never in the URL). */
 export const lookupOrder = (code: string, phoneEnd: string) =>
   call<LookupResponse>("POST", "/api/public/lookup", { code, phoneEnd } satisfies LookupRequest);
+
+/** Cost estimate: amount and text only after the last phone digits (sent in the body, never in the URL). */
+export const getEstimate = (code: string, phoneEnd: string) =>
+  call<PublicEstimate>("POST", `/api/public/orders/${encodeURIComponent(code)}/estimate`, { phoneEnd } satisfies PublicEstimateRequest);
+export const decideEstimate = (code: string, phoneEnd: string, version: number, decision: "FREIGEGEBEN" | "ABGELEHNT") =>
+  call<PublicEstimate>("POST", `/api/public/orders/${encodeURIComponent(code)}/estimate/decision`, { phoneEnd, version, decision } satisfies PublicEstimateDecisionRequest);

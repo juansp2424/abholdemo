@@ -4,6 +4,7 @@ import type { OrderFilter, OrderSummary } from "@abholdemo/shared";
 import { api } from "../api";
 import { formatSlot } from "../format";
 import { Alert, PageHeader, StatusBadge, useDebounced, useLoad } from "../ui";
+import { EstimateBadge } from "./Estimate";
 
 const FILTERS = Object.keys(ORDER_FILTER_LABELS) as OrderFilter[];
 
@@ -54,6 +55,7 @@ export function OrderList() {
               </span>
               <span className="order-side">
                 <StatusBadge status={o.status} />
+                {o.estimateState && o.estimateState !== "ZURUECKGEZOGEN" && o.estimateState !== "ABGELAUFEN" ? <EstimateBadge state={o.estimateState} /> : null}
                 <span className="muted">{o.ageDays === 1 ? "1 Tag alt" : `${o.ageDays} Tage alt`}</span>
               </span>
             </a>

@@ -49,6 +49,22 @@ Tests des Backends: `npm test`. Die Daten liegen in `packages/api/data/` und wer
 
 Vorhandene Demo Aufträge für die Kundenseite (Code und die letzten vier Ziffern der Telefonnummer, die für die zentrale Seite nötig sind): `D3FY6W` mit `0012` (abholbereit, ohne Eintrag), `7KP4QX` mit `0013` (abholbereit, Abholzeit gebucht), `RT8WMZ` mit `0034` (überfällig), `H7RT3K` mit `0019` (angenommen), `Q9XB2M` mit `0017` (in Arbeit). Die Telefonnummer steht im Auftrag in der Betriebs App. Oder direkt über den Link: `http://localhost:5174/a/D3FY6W` (ohne Ziffern).
 
+## Kostenvoranschlag testen
+
+Drei Beispiele sind in den Aufträgen vorhanden (nach "Demodaten zurücksetzen" im Menü "Demo" sind sie sicher da):
+
+| Auftrag | Zustand | Kanal | Kundenseite (Ziffern) |
+|---|---|---|---|
+| `Q9XB2M` | wartet auf Freigabe | Mail | `http://localhost:5174/a/Q9XB2M`, Ziffern `0017` |
+| `H7RT3K` | wartet auf Freigabe | WhatsApp | `http://localhost:5174/a/H7RT3K`, Ziffern `0019` |
+| `C6VJ5T` | vom Kunden freigegeben | WhatsApp | `http://localhost:5174/a/C6VJ5T`, Ziffern `0016` |
+
+**Sicht des Betriebs:** Betriebs App, Auftrag öffnen, Abschnitt "Kostenvoranschlag" (Betrag, Zustand, "Telefonisch freigegeben", "Neu senden", "Zurückziehen"). In der Auftragsliste zeigt ein Schild den Stand, der Filter "Wartet auf Freigabe" listet die offenen. Neuen Voranschlag senden: in einem Auftrag Betrag, Text, Gültigkeit und Kanal (Mail oder WhatsApp) eintragen. Die Nachricht steht unter "Nachrichten".
+
+**Sicht des Kunden:** Link wie oben öffnen. Betrag und Text erscheinen erst nach den letzten vier Ziffern der Telefonnummer, dann "Freigeben" oder "Ablehnen" (mit Rückfrage). Die Nachricht selbst enthält nur den Link.
+
+Mit "Zeit vorspulen" (Menü "Demo") kommt einen Tag vor Ende der Gültigkeit eine Erinnerung, danach läuft der Voranschlag ab.
+
 ## Demoablauf (drei Minuten)
 
 **Schnellauswahl:** Die Demo bringt zwei Einträge mit ("Wartung Paket 1" und "Reifenwechsel (Sommer) mit Einlagerung"). Sie erscheinen als Knöpfe beim neuen Auftrag. Der Inhaber kann sie unter "Einstellungen", Abschnitt "Schnellauswahl für neue Aufträge", ändern, löschen oder ergänzen. Nach "Demodaten zurücksetzen" sind wieder die zwei Einträge da.

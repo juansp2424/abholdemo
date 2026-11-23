@@ -10,13 +10,14 @@ import {
   normalizeCode,
   type Channel,
   type PublicBusiness,
+  type PublicEstimate,
   type PublicOrderView,
   type PublicSlotsResponse,
   type RevokeSource,
 } from "@abholdemo/shared";
 import { iso } from "../clock.js";
 import type { Ctx } from "../context.js";
-import { addSubscription, revokeSubscription, toPublicView } from "../domain.js";
+import { addMessage, addSubscription, closeEstimate, openEstimate, revokeSubscription, toPublicView } from "../domain.js";
 import { activeBookings, generateSlotDays } from "../slots.js";
 import type { OrderRec } from "../types.js";
 import { EMAIL_ERROR, PHONE_ERROR, asObject, fail, invalid, isEmail, isPhone } from "../validation.js";
@@ -121,6 +122,42 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
     await padded(started);
     if ("order" in r) return toPublicView(db(), r.order);
     return reply.code(r.status).send(r.body);
+  });
+
+  // Cost estimate (central page only). Amount and text only after the last phone digits; nothing personal in the URL.
+  const digitsOf = (body: Record<string, unknown>) => {
+    const d = typeof body.phoneEnd === "string" ? body.phoneEnd.replace(/\D/g, "") : "";
+    return d.length === PHONE_END_LENGTH ? d : "invalid";
+  };
+  const publicEstimate = (o: OrderRec): PublicEstimate | null => {
+    const e = o.estimates.at(-1);
+    return e ? { version: e.version, amountCents: e.amountCents, description: e.description, validUntil: e.validUntil, state: e.state, decidedAt: e.decidedAt } : null;
+  };
+
+  app.post("/api/public/orders/:code/estimate", async (req, reply) => {
+    const started = Date.now();
+    const r = resolveCode(req, (req.params as { code: string }).code, undefined, digitsOf(asObject(req.body)));
+    await padded(started);
+    if (!("order" in r)) return reply.code(r.status).send(r.body);
+    return publicEstimate(r.order) ?? reply.code(404).send(NEUTRAL_404);
+  });
+
+  app.post("/api/public/orders/:code/estimate/decision", async (req, reply) => {
+    const body = asObject(req.body);
+    const r = resolveCode(req, (req.params as { code: string }).code, undefined, digitsOf(body));
+    if (!("order" in r)) return reply.code(r.status).send(r.body);
+    const o = r.order;
+    if (body.decision !== "FREIGEGEBEN" && body.decision !== "ABGELEHNT") invalid("Bitte wählen Sie Freigeben oder Ablehnen.");
+    const e = openEstimate(o);
+    if (!e || e.version !== body.version) {
+      fail(409, "NOT_ALLOWED", "Dieser Kostenvoranschlag ist nicht mehr offen. Bitte laden Sie die Seite neu oder fragen Sie im Betrieb.");
+    }
+    const now = ctx.now();
+    closeEstimate(e!, body.decision as "FREIGEGEBEN" | "ABGELEHNT", now);
+    e!.decidedVia = "KUNDENSEITE";
+    const to = e!.channel === "MAIL" ? o.customerEmail : o.customerPhone;
+    if (to) addMessage(db(), o, "KV_ENTSCHEIDUNG", e!.channel, to, now, body.decision === "FREIGEGEBEN" ? "freigegeben" : "abgelehnt");
+    return publicEstimate(o);
   });
 
   app.post(`${ORDER}/subscribe`, async (req, reply): Promise<PublicOrderView | undefined> => {

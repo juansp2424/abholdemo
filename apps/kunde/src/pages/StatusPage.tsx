@@ -4,6 +4,7 @@ import { ApiFailure, getBusiness, getOrder, unsubscribe } from "../api";
 import { Link } from "../App";
 import { formatDate, formatRange } from "../format";
 import { FALLBACK_HINT, PRIVACY_TEXT } from "../texts";
+import { EstimateSection } from "./EstimateSection";
 import { SlotSection } from "./SlotSection";
 import { SubscribeSection } from "./SubscribeSection";
 
@@ -98,6 +99,10 @@ export function StatusPage({ web, code, abmelden, central = false }: { web: stri
           </p>
         )}
       </section>
+
+      {central && order.estimateState && (order.estimateState === "OFFEN" || order.estimateState === "FREIGEGEBEN" || order.estimateState === "ABGELEHNT" || order.status === "ANGENOMMEN" || order.status === "IN_ARBEIT") && (
+        <EstimateSection code={code} state={order.estimateState} onDecided={() => getOrder(web, code).then(setOrder, () => undefined)} />
+      )}
 
       {order.canSubscribe && <SubscribeSection web={web} code={code} business={biz} onChange={setOrder} />}
 

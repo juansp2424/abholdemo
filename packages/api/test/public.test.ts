@@ -147,7 +147,7 @@ describe("public responses contain no personal data", () => {
     expect(Object.keys(r.json).sort()).toEqual(
       [
         "code", "status", "statusLabel", "statusText", "estimatedCompletion", "plannedPickupDate", "slot",
-        "pickupDeadlineDays", "pickupDeadline", "canSubscribe", "notifyActive", "notifyChannel", "slotBookingOpen",
+        "pickupDeadlineDays", "pickupDeadline", "canSubscribe", "notifyActive", "notifyChannel", "slotBookingOpen", "estimateState",
       ].sort(),
     );
     expect(r.json).toMatchObject({ status: "ABHOLBEREIT", notifyActive: true, notifyChannel: "MAIL", slotBookingOpen: true, canSubscribe: false, pickupDeadlineDays: 14 });

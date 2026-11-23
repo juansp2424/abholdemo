@@ -137,13 +137,23 @@ export const CHANNEL_COST_EUR: Record<Channel, number> = {
  * ERINNERUNG: one reminder after the pickup deadline, subscribed customers only (R28).
  * MITTEILUNG: free text from staff to the customer's intake contact, e.g. when a repair is delayed because parts must be ordered.
  */
-export type MessageType = "STATUSLINK" | "ABHOLBEREIT" | "ERINNERUNG" | "MITTEILUNG";
+export type MessageType =
+  | "STATUSLINK"
+  | "ABHOLBEREIT"
+  | "ERINNERUNG"
+  | "MITTEILUNG"
+  | "KOSTENVORANSCHLAG"
+  | "KV_ERINNERUNG"
+  | "KV_ENTSCHEIDUNG";
 
 export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   STATUSLINK: "Statuslink",
   ABHOLBEREIT: "Abholbereit",
   ERINNERUNG: "Erinnerung",
   MITTEILUNG: "Mitteilung",
+  KOSTENVORANSCHLAG: "Kostenvoranschlag",
+  KV_ERINNERUNG: "Erinnerung Kostenvoranschlag",
+  KV_ENTSCHEIDUNG: "Bestätigung Entscheidung",
 };
 
 /** Channel for a staff message to the intake contact: mail if an email was captured, otherwise SMS to the phone number. */
@@ -322,6 +332,7 @@ export interface OrderSummary {
   slot: { start: string; end: string } | null; // active booking only
   hasPhoto: boolean;
   notify: boolean; // active subscription
+  estimateState: EstimateState | null; // state of the newest cost estimate, null if none
 }
 
 export interface OrderDetail extends OrderSummary {
@@ -340,6 +351,8 @@ export interface OrderDetail extends OrderSummary {
   messageCount: number;
   allowedTransitions: OrderStatus[]; // MANUAL_TRANSITIONS[status]
   statusUrl: string;
+  estimates: EstimateView[]; // oldest first
+  canEstimate: boolean; // status in ESTIMATE_STATUSES
 }
 
 export interface CreateOrderRequest {
@@ -357,11 +370,12 @@ export interface ChangeStatusRequest {
   status: OrderStatus;
 }
 
-export type OrderFilter = "alle" | "offen" | "abholbereit" | "ueberfaellig" | "heute_abgeholt";
+export type OrderFilter = "alle" | "offen" | "freigabe" | "abholbereit" | "ueberfaellig" | "heute_abgeholt";
 
 export const ORDER_FILTER_LABELS: Record<OrderFilter, string> = {
   alle: "Alle",
   offen: "Offen",
+  freigabe: "Wartet auf Freigabe",
   abholbereit: "Abholbereit",
   ueberfaellig: "Überfällig",
   heute_abgeholt: "Heute abgeholt",
@@ -472,6 +486,7 @@ export interface PublicOrderView {
   notifyActive: boolean;
   notifyChannel: Channel | null; // channel only, never the contact
   slotBookingOpen: boolean; // status in SLOT_STATUSES
+  estimateState: EstimateState | null; // newest cost estimate; amount and text only after the phone digits (see PublicEstimate)
 }
 
 export interface SubscribeRequest {
@@ -519,6 +534,76 @@ export interface PublicSlotsResponse {
 
 export interface BookSlotRequest {
   start: string; // ISO, must equal a generated slot start
+}
+
+// ---------------------------------------------------------------------------
+// Cost estimates (Kostenvoranschlag)
+// ---------------------------------------------------------------------------
+
+export type EstimateState = "OFFEN" | "FREIGEGEBEN" | "ABGELEHNT" | "ZURUECKGEZOGEN" | "ABGELAUFEN";
+
+export const ESTIMATE_STATE_LABELS: Record<EstimateState, string> = {
+  OFFEN: "Wartet auf Freigabe",
+  FREIGEGEBEN: "Freigegeben",
+  ABGELEHNT: "Abgelehnt",
+  ZURUECKGEZOGEN: "Zurückgezogen",
+  ABGELAUFEN: "Abgelaufen",
+};
+
+/** Channels for a cost estimate: mail to the intake email, WhatsApp to the intake phone number. */
+export type EstimateChannel = "MAIL" | "WHATSAPP";
+export const ESTIMATE_CHANNELS: EstimateChannel[] = ["MAIL", "WHATSAPP"];
+
+export type EstimateDecisionSource = "KUNDENSEITE" | "BETRIEB";
+
+/** Statuses in which an estimate can be sent. */
+export const ESTIMATE_STATUSES: OrderStatus[] = ["ANGENOMMEN", "IN_ARBEIT"];
+
+export const ESTIMATE_DESCRIPTION_MAX = 300;
+export const ESTIMATE_MAX_CENTS = 10_000_000; // 100 000 Euro
+export const ESTIMATE_DEFAULT_VALID_DAYS = 7;
+
+export interface EstimateView {
+  version: number; // 1, 2, ... a new estimate replaces an open one
+  amountCents: number;
+  description: string;
+  validUntil: string; // YYYY-MM-DD
+  state: EstimateState;
+  channel: EstimateChannel;
+  sentAt: string;
+  decidedAt: string | null; // decision, withdrawal or expiry
+  decidedVia: EstimateDecisionSource | null; // only for FREIGEGEBEN and ABGELEHNT
+}
+
+export interface CreateEstimateRequest {
+  amountCents: number; // integer, 1..ESTIMATE_MAX_CENTS
+  description: string; // 1..ESTIMATE_DESCRIPTION_MAX chars
+  validUntil?: string | null; // YYYY-MM-DD, default today + ESTIMATE_DEFAULT_VALID_DAYS
+  channel: EstimateChannel;
+}
+
+export interface DecideEstimateRequest {
+  decision: "FREIGEGEBEN" | "ABGELEHNT";
+}
+
+/** Customer view of the newest estimate. Only after the last phone digits; never in a message. */
+export interface PublicEstimate {
+  version: number;
+  amountCents: number;
+  description: string;
+  validUntil: string;
+  state: EstimateState;
+  decidedAt: string | null;
+}
+
+export interface PublicEstimateRequest {
+  phoneEnd: string;
+}
+
+export interface PublicEstimateDecisionRequest {
+  phoneEnd: string;
+  version: number;
+  decision: "FREIGEGEBEN" | "ABGELEHNT";
 }
 
 // ---------------------------------------------------------------------------

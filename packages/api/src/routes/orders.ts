@@ -21,7 +21,7 @@ import { actorOf, addMessage, applyStatus, logStatus, toDetail, toSummary } from
 import type { OrderRec, UserRec } from "../types.js";
 import { EMAIL_ERROR, PHONE_ERROR, asObject, fail, invalid, isEmail, isPhone, optDate, optText } from "../validation.js";
 
-const FILTERS: OrderFilter[] = ["alle", "offen", "abholbereit", "ueberfaellig", "heute_abgeholt"];
+const FILTERS: OrderFilter[] = ["alle", "offen", "freigabe", "abholbereit", "ueberfaellig", "heute_abgeholt"];
 const PHOTO_RE = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/;
 const MAX_PHOTO_BYTES = 3_000_000;
 
@@ -50,6 +50,8 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
       switch (filter) {
         case "offen":
           return o.status === "ANGENOMMEN" || o.status === "IN_ARBEIT";
+        case "freigabe":
+          return o.estimates.at(-1)?.state === "OFFEN";
         case "abholbereit":
           return o.status === "ABHOLBEREIT";
         case "ueberfaellig":
@@ -115,6 +117,7 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
       subscription: null,
       consentLog: [],
       booking: null,
+      estimates: [],
       readyMessageSent: false,
       reminderSent: false,
     };

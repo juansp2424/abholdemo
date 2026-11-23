@@ -3,7 +3,7 @@ import { PUBLIC_LOOKUP_MIN_MS } from "@abholdemo/shared";
 import { DAY_MS, systemClock, type Clock } from "./clock.js";
 import { cryptoRandomInt, type RandomInt } from "./code.js";
 import type { Ctx } from "./context.js";
-import { sweepOverdue } from "./domain.js";
+import { sweepEstimates, sweepOverdue } from "./domain.js";
 import { createRateLimiter } from "./rateLimit.js";
 import { authRoutes, authedAuthRoutes } from "./routes/auth.js";
 import { demoRoutes } from "./routes/demo.js";
@@ -11,6 +11,7 @@ import { messageRoutes } from "./routes/messages.js";
 import { orderRoutes } from "./routes/orders.js";
 import { publicRoutes } from "./routes/public.js";
 import { settingsRoutes } from "./routes/settings.js";
+import { estimateRoutes } from "./routes/estimates.js";
 import { seed } from "./seed.js";
 import { Store, type RemoteDb } from "./store.js";
 import { HttpError } from "./validation.js";
@@ -74,7 +75,7 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
   app.addHook("onRequest", async (req) => {
     if (!req.url.startsWith("/api/")) return;
     const r = sweepOverdue(store.db, now());
-    if (r.newlyOverdue.length) store.dirty = true;
+    if (sweepEstimates(store.db, now()) || r.newlyOverdue.length) store.dirty = true;
   });
 
   // Persist after anything that may have changed data (atomic file write).
@@ -111,6 +112,7 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
     orderRoutes(s, ctx);
     messageRoutes(s, ctx);
     settingsRoutes(s, ctx);
+    estimateRoutes(s, ctx);
     demoRoutes(s, ctx);
   });
 

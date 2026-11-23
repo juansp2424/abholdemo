@@ -121,3 +121,8 @@ fieldset { border: 0; padding: 0; margin: 12px 0; }
 
 /* Only the business name uses Futura */
 .biz, .biz-title { font-family: Futura, "Futura PT", "Century Gothic", "Avenir Next", "Trebuchet MS", sans-serif; letter-spacing: 0.01em; }
+
+/* Hosting notice at the very bottom of the page */
+.hosted-by { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; font-size: 0.8125rem; color: var(--muted); }
+.hosted-by-name { font-weight: 600; }
+@media print { .hosted-by { display: none; } }

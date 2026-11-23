@@ -362,3 +362,8 @@ textarea { resize: vertical; }
 .tag-code { font-family: var(--mono); font-weight: 700; font-size: 26px; letter-spacing: 0.06em; line-height: 1.15; }
 .tag-hint { font-size: 10.5px; line-height: 1.25; margin-top: 4px; }
 @media print { .tag-card { border-radius: 0; } }
+
+/* Hosting notice at the very bottom of the page */
+.hosted-by { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; font-size: 0.8125rem; color: var(--label-2); }
+.hosted-by-name { font-weight: 600; }
+@media print { .hosted-by { display: none; } }

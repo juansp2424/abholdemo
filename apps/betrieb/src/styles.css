@@ -367,3 +367,125 @@ textarea { resize: vertical; }
 .hosted-by { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; font-size: 0.8125rem; color: var(--label-2); }
 .hosted-by-name { font-weight: 600; }
 @media print { .hosted-by { display: none; } }
+
+/* ===== Microsoft Office / Fluent look =====
+   Same colors (all tokens above are unchanged). Only typography, shapes and control styles follow Office:
+   Segoe UI (Selawik as open metric compatible fallback), 2px corners, 1px borders, outlined buttons,
+   pivot tabs, Fluent toggle, bottom accent line on focused inputs, depth shadows instead of blur. */
+@font-face { font-family: Selawik; font-weight: 400; font-display: swap; src: url(/fonts/selawk.woff2) format("woff2"); }
+@font-face { font-family: Selawik; font-weight: 600; font-display: swap; src: url(/fonts/selawksb.woff2) format("woff2"); }
+@font-face { font-family: Selawik; font-weight: 700; font-display: swap; src: url(/fonts/selawkb.woff2) format("woff2"); }
+:root {
+  --font: "Segoe UI", "Segoe UI Variable Text", Selawik, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --radius: 4px;
+  --bar-h: 48px;
+  --border: color-mix(in srgb, var(--label-2) 65%, transparent);
+  --depth-4: 0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.11);
+  --depth-16: 0 6.4px 14.4px rgba(0, 0, 0, 0.18), 0 1.2px 3.6px rgba(0, 0, 0, 0.14);
+}
+body { font-size: 14px; line-height: 1.43; -webkit-font-smoothing: auto; }
+h1 { font-size: 28px; line-height: 1.2; font-weight: 600; }
+h2 { font-size: 18px; line-height: 1.3; font-weight: 600; }
+h3 { font-size: 14px; font-weight: 600; }
+code { border-radius: 2px; }
+small.muted { font-size: 12px; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.brand-name { font-family: var(--font); letter-spacing: 0; }
+
+/* Title bar and navigation rail */
+.topbar { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 1px solid var(--sep); padding: 4px 16px; }
+.brand { font-size: 16px; }
+.brand-logo { border-radius: 2px; height: 28px; }
+.demo-marker { border-radius: 2px; font-size: 12px; padding: 2px 8px; }
+.who { font-size: 13px; }
+.nav { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; border-right: 1px solid var(--sep); padding: 8px 0; gap: 0; }
+.nav-item { position: relative; min-height: 40px; padding: 6px 16px; border-radius: 0; font-weight: 400; font-size: 14px; gap: 14px; transition: background-color 80ms linear; }
+.nav-item:active { transform: none; background: var(--fill-2); }
+.nav-item.active { background: var(--blue-tint); color: var(--label); font-weight: 600; }
+.nav-item.active::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--blue); }
+.nav-item.active .nav-icon { color: var(--blue-text); }
+.nav-icon, .nav-icon svg { width: 20px; height: 20px; }
+@media (max-width: 767px) {
+  .nav { padding: 4px; border-top: 1px solid var(--sep); }
+  .nav-item { font-size: 11px; padding: 4px 6px; }
+  .nav-item.active { background: transparent; }
+  .nav-item.active::before { left: 12px; right: 12px; top: 0; bottom: auto; width: auto; height: 3px; }
+  h1 { font-size: 24px; }
+}
+
+/* Surfaces: cards behave like Office dialog groups */
+.card, .order-list, .summary-box, .empty, .cal-scroll { border: 1px solid var(--sep); border-radius: var(--radius); box-shadow: var(--depth-4); }
+.card { padding: 16px 20px; }
+.settings > .card > h2, .card > h2:first-child { padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--sep); }
+.settings { gap: 16px; max-width: 760px; }
+.settings > .btn-xl { align-self: flex-end; width: auto; min-width: 120px; }
+
+/* Inputs: 1px border, accent line at the bottom while focused */
+input, select, textarea { min-height: 32px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 2px; background: var(--surface); transition: border-color 80ms linear; }
+input:hover, select:hover, textarea:hover { border-color: var(--label); }
+input:focus, select:focus, textarea:focus { background: var(--surface); border-color: var(--blue); box-shadow: inset 0 -2px 0 var(--blue); }
+input[type="file"] { border: 0; padding: 4px 0; min-height: 0; box-shadow: none; }
+.field { gap: 4px; font-size: 14px; font-weight: 600; }
+.input-big { font-size: 20px; min-height: 44px; }
+.more input, .more select, .more textarea, .day-row input { background: var(--surface); }
+.hint-box, .more, .preview, .day-row, .quick-list, .confirm, .logo-preview { border-radius: 2px; }
+.hint-box { font-size: 14px; border-left: 3px solid var(--blue); }
+.day-row { border: 1px solid var(--sep); }
+.quick-list { border: 1px solid var(--sep); }
+.photo-preview img, .order-photo { border-radius: 2px; }
+
+/* Fluent toggle (on state keeps the existing green) */
+.check { min-height: 32px; font-weight: 400; gap: 10px; }
+.check input[type="checkbox"] { width: 40px; height: 20px; border: 1px solid var(--label-2); background: transparent; box-shadow: none; }
+.check input[type="checkbox"]::after { top: 3px; left: 3px; width: 12px; height: 12px; background: var(--label-2); box-shadow: none; transition: transform 100ms linear, background-color 100ms linear; }
+.check input[type="checkbox"]:checked { background: var(--green); border-color: var(--green); }
+.check input[type="checkbox"]:checked::after { background: #fff; transform: translateX(20px); }
+.check input[type="checkbox"]:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* Buttons: rectangular Office buttons */
+.btn { min-height: 32px; min-width: 32px; padding: 4px 16px; border-radius: 2px; border: 1px solid transparent; font-weight: 600; font-size: 14px; transition: background-color 80ms linear, border-color 80ms linear; }
+.btn:active:not(:disabled) { transform: none; opacity: 1; filter: brightness(0.9); }
+.btn:disabled { opacity: 0.45; }
+.btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn-primary:hover:not(:disabled) { filter: brightness(0.93); }
+.btn-secondary { background: var(--surface); border-color: var(--border); color: var(--label); }
+.btn-secondary:hover:not(:disabled) { background: var(--fill); border-color: var(--label-2); }
+.btn-danger { background: var(--surface); border-color: var(--red); color: var(--red-text); }
+.btn-danger:hover:not(:disabled) { background: var(--red-tint); }
+.confirm .btn-danger { background: var(--red); border-color: var(--red); color: #fff; }
+.btn-quiet { min-height: 32px; padding: 4px 10px; color: var(--blue-text); }
+.btn-quiet:hover:not(:disabled) { background: var(--fill); }
+.btn-xl { min-height: 44px; font-size: 16px; padding: 8px 24px; border-radius: 2px; }
+.btn-row { gap: 8px; }
+
+/* Filters become Office pivot tabs */
+.chips { gap: 4px; border-bottom: 1px solid var(--sep); margin: 8px 0 14px; }
+.chip { min-height: 36px; padding: 4px 12px; border-radius: 0; background: transparent; border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 400; }
+.chip:hover { background: var(--fill); }
+.chip:active { transform: none; }
+.chip-on, .chip-on:hover { background: transparent; color: var(--label); border-bottom-color: var(--blue); font-weight: 600; }
+
+/* Message bars, tags, status */
+.alert { border-radius: 2px; border: 1px solid color-mix(in srgb, currentColor 30%, transparent); font-weight: 400; }
+.badge, .tag, .demo-tag { border-radius: 2px; }
+.badge { font-size: 12px; padding: 1px 8px; }
+.demo-banner { border-radius: 2px; }
+
+/* Lists and calendar */
+.order-row { min-height: 56px; padding: 8px 16px; transition: background-color 80ms linear; }
+.order-row::after { width: 6px; height: 6px; border-width: 1.5px; }
+.order-code { font-size: 22px; }
+.cal-bar { border-radius: 2px; border-left-width: 3px; transition: none; }
+.cal-bar:active { transform: none; filter: brightness(0.92); }
+.cal-chip { border-radius: 2px; min-height: 36px; }
+.cal-legend { font-size: 12px; }
+.summary-value { font-size: 24px; font-weight: 600; }
+.quote { border-left-width: 2px; }
+
+/* Sign in like an Office dialog */
+.login-card { border-radius: var(--radius); box-shadow: var(--depth-16); }
+
+@media (prefers-reduced-transparency: reduce) { .topbar, .nav { background: var(--surface); } }
+@media (prefers-reduced-motion: reduce) { .btn:active, .chip:active, .nav-item:active, .cal-bar:active { filter: none; } }
+input[type="file"]::file-selector-button { font: inherit; font-weight: 600; min-height: 32px; padding: 4px 16px; margin-right: 10px; border: 1px solid var(--border); border-radius: 2px; background: var(--surface); color: var(--label); cursor: pointer; }
+input[type="file"]::file-selector-button:hover { background: var(--fill); border-color: var(--label-2); }

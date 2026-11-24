@@ -55,9 +55,13 @@ export function Messages() {
               <li key={m.id} className="card msg">
                 <div className="msg-head">
                   <span className="msg-time">{formatDateTime(m.createdAt)}</span>
-                  <a className="order-code order-code-sm" href={`#/auftrag/${m.orderId}`}>
-                    {m.orderCode}
-                  </a>
+                  {m.orderId ? (
+                    <a className="order-code order-code-sm" href={`#/auftrag/${m.orderId}`}>
+                      {m.orderCode}
+                    </a>
+                  ) : (
+                    <span className="tag">Termin</span>
+                  )}
                   <span className="tag">{CHANNEL_LABELS[m.channel]}</span>
                   <span className="tag tag-soft">{MESSAGE_TYPE_LABELS[m.type]}</span>
                   <span className="msg-cost">{formatEuro(m.costEur)}</span>

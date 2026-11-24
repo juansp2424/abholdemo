@@ -199,6 +199,35 @@ Messages (never contain amount, description, item or name; no STOP suffix; chann
 
 Lifecycle: the sweep before every API request sets `ABGELAUFEN` after the last valid day and creates the reminder. A status change to `ABHOLBEREIT`, `ABGEHOLT` or `STORNIERT` withdraws an open estimate. Old data files get `estimates: []` on load.
 
+### 6.9 Expected completion date
+
+`POST /api/betrieb/orders/:id/completion` body `SetCompletionRequest` `{ date: "YYYY-MM-DD" | null, note?, notify }` → `OrderDetail`. Only for `ANGENOMMEN` and `IN_ARBEIT` (`409 NOT_ALLOWED`). `400 VALIDATION` for a past or malformed date, a note over 200 chars, or an unchanged date. Appends to `OrderDetail.completionLog` `{ at, from, to, note, notified, actorName }`. With `notify: true` and a date: message `NEUES_DATUM` to the intake contact (`contactChannel()`): `Guten Tag, Ihr Auftrag {nummer} bei {betrieb} wird voraussichtlich am {TT.MM.JJJJ} fertig. {Grund} Den Stand sehen Sie hier: {link}`. Removing the date (`null`) never sends a message. `PublicOrderView.completionPostponed` is true when the latest change moved an existing date to a later one; `completionNote` is the reason given with the current date.
+
+### 6.10 Drop-off appointments (Abgabetermin)
+
+Settings: `dropOffEnabled` (default true), `dropOffCapacity` 1..10 (default 2, separate from `slotCapacity`). Windows: same generation as pickup slots (opening hours, `slotLengthMinutes`), from the next calendar day, `DROPOFF_DAYS_AHEAD` = 14 days. `PublicBusiness.dropOffEnabled`.
+
+Customer (no auth):
+
+* `GET /api/public/b/:webname/dropoff` → `PublicDropOffInfo` `{ enabled, services (quick selection), days }` (free windows only).
+* `POST /api/public/b/:webname/dropoff` body `BookDropOffRequest` → `201 PublicAppointment`. Validation `400`; `MAIL` needs `customerEmail`; filled `website` (bot trap) → `400`; window not generated → `400 SLOT_INVALID`; full → `409 SLOT_FULL`; more than 3 open appointments for the phone number → `409 NOT_ALLOWED`; switched off → `409`. Creates `TERMIN_BESTAETIGUNG`.
+* `GET /api/public/appointments/:token` → `PublicAppointment` (no name or contact). Unknown token: neutral `404`, counts towards the lock.
+* `GET /api/public/appointments/:token/slots` → `{ days }` for rebooking (own appointment not counted).
+* `PUT /api/public/appointments/:token` body `{ start }` → rebook, `TERMIN_GEAENDERT`. `DELETE` → `ABGESAGT_KUNDE`. Both only while `GEBUCHT` and in the future (`409`).
+
+Staff (any logged in staff):
+
+* `GET /api/betrieb/appointments?date=` (default today) → `AppointmentView[]`. `day-slots` returns `dropOffs` (booked, attended, no-show).
+* `POST /api/betrieb/appointments/:id/convert` → `201 OrderDetail`: new order with `item`, `category` = service, name and contact, plus the usual `STATUSLINK`. Appointment becomes `ERSCHIENEN` with `orderId`.
+* `POST .../no-show` → `NICHT_ERSCHIENEN`; `POST .../cancel` → `ABGESAGT_BETRIEB` plus `TERMIN_ABSAGE` (link to book again). Both only for `GEBUCHT`.
+
+Messages (`orderId` is `""`, `appointmentId` set; never name or item; channel as chosen by the customer):
+
+* `TERMIN_BESTAETIGUNG`: `Guten Tag, Ihr Termin zum Abgeben bei {betrieb} ist gebucht: {Wochentag, TT.MM.JJJJ, HH:MM Uhr}. Absagen oder ändern: {link}`
+* `TERMIN_ERINNERUNG` (once, on the day before), `TERMIN_GEAENDERT`, `TERMIN_ABSAGE` analog. `{link}` = `{central}/termin/{token}`, for the cancellation `{central}/b/{webname}/termin`.
+
+Lifecycle: the sweep before every API request sends the reminder and sets `NICHT_ERSCHIENEN` after the appointment's day. Old data files get `appointments: []`, `counters.appointment` and the two settings on load.
+
 ## 7. Seed (R4)
 
 Business `Werkstatt Demo`, webname `werkstatt-demo`, hours Mo to Fr 09:00 to 13:00 and 14:00 to 18:00, Sa 09:00 to 13:00, So closed. Slot length 15, capacity 2, deadline 14 days, default channel MAIL, default template.

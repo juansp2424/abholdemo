@@ -7,7 +7,10 @@ import {
   SUBSCRIBE_STATUSES,
   orderUrl,
   type Channel,
+  type AppointmentView,
   type EstimateState,
+  type PublicAppointment,
+  KUNDE_BASE_URL,
   type EstimateView,
   type MessageType,
   type MessageView,
@@ -19,9 +22,9 @@ import {
 } from "@abholdemo/shared";
 import { DAY_MS, iso, toDateString } from "./clock.js";
 import { ESTIMATE_STATUSES } from "@abholdemo/shared";
-import { buildMessageText, costFor, maskContact } from "./messages.js";
+import { appointmentText, buildMessageText, costFor, maskContact, whenText } from "./messages.js";
 import type { PhotoStore } from "./store.js";
-import type { Db, EstimateRec, MessageRec, OrderRec, UserRec } from "./types.js";
+import type { AppointmentRec, Db, EstimateRec, MessageRec, OrderRec, UserRec } from "./types.js";
 
 export interface Actor {
   id: string | null;
@@ -120,6 +123,71 @@ export function sweepEstimates(db: Db, nowMs: number): boolean {
   return changed;
 }
 
+// ---------------------------------------------------------------------------
+// Drop-off appointments
+// ---------------------------------------------------------------------------
+
+export const appointmentUrl = (token: string) => `${KUNDE_BASE_URL}/termin/${token}`;
+
+/** Simulated message about an appointment (no order yet). */
+export function addAppointmentMessage(db: Db, a: AppointmentRec, type: MessageType, atMs: number): MessageRec {
+  const link = type === "TERMIN_ABSAGE" ? `${KUNDE_BASE_URL}/b/${db.settings.webname}/termin` : appointmentUrl(a.token);
+  const recipient = a.channel === "MAIL" ? a.customerEmail ?? a.customerPhone : a.customerPhone;
+  const msg: MessageRec = {
+    id: `m${++db.counters.message}`,
+    orderId: "",
+    appointmentId: a.id,
+    type,
+    channel: a.channel,
+    recipient,
+    text: appointmentText(type, db.settings.name, whenText(a.start), link),
+    link,
+    deliveryStatus: "ZUGESTELLT_SIMULIERT",
+    costEur: costFor(a.channel),
+    createdAt: iso(atMs),
+    stopSimulated: false,
+  };
+  db.messages.push(msg);
+  return msg;
+}
+
+/** One reminder on the day before; after the appointment's day an appointment that is still booked counts as no-show. */
+export function sweepAppointments(db: Db, nowMs: number): boolean {
+  let changed = false;
+  const today = toDateString(nowMs);
+  for (const a of db.appointments) {
+    if (a.state !== "GEBUCHT") continue;
+    const day = toDateString(Date.parse(a.start));
+    if (day < today) {
+      a.state = "NICHT_ERSCHIENEN";
+      changed = true;
+    } else if (!a.reminderSent && toDateString(Date.parse(a.start) - DAY_MS) === today) {
+      addAppointmentMessage(db, a, "TERMIN_ERINNERUNG", nowMs);
+      a.reminderSent = true;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+export function toAppointmentView(db: Db, a: AppointmentRec): AppointmentView {
+  const order = a.orderId ? db.orders.find((o) => o.id === a.orderId) : undefined;
+  return {
+    id: a.id, start: a.start, end: a.end, service: a.service, item: a.item, customerName: a.customerName,
+    customerPhone: a.customerPhone, customerEmail: a.customerEmail, channel: a.channel, state: a.state,
+    createdAt: a.createdAt, orderId: a.orderId, orderCode: order?.code ?? null,
+  };
+}
+
+export function toPublicAppointment(db: Db, a: AppointmentRec, nowMs: number): PublicAppointment {
+  const order = a.orderId ? db.orders.find((o) => o.id === a.orderId) : undefined;
+  return {
+    token: a.token, businessName: db.settings.name, webname: db.settings.webname, start: a.start, end: a.end,
+    service: a.service, item: a.item, state: a.state, changeable: a.state === "GEBUCHT" && Date.parse(a.start) > nowMs,
+    orderCode: order?.code ?? null,
+  };
+}
+
 /** Applies a validated manual transition with all side effects. */
 export function applyStatus(db: Db, order: OrderRec, to: OrderStatus, actor: Actor, nowMs: number) {
   const from = order.status;
@@ -212,6 +280,8 @@ export function toDetail(db: Db, photos: PhotoStore, o: OrderRec, nowMs: number)
     statusUrl: orderUrl(o.code),
     estimates: o.estimates.map(toEstimateView),
     canEstimate: ESTIMATE_STATUSES.includes(o.status),
+    completionLog: o.completionLog,
+    canChangeCompletion: ESTIMATE_STATUSES.includes(o.status),
   };
 }
 
@@ -238,7 +308,15 @@ export function toPublicView(db: Db, o: OrderRec): PublicOrderView {
     notifyChannel: sub ? sub.channel : null,
     slotBookingOpen: ready,
     estimateState: o.estimates.at(-1)?.state ?? null,
+    ...completionInfo(o),
   };
+}
+
+/** Postponed: the latest change moved an existing date to a later one. The note belongs to the current date only. */
+function completionInfo(o: OrderRec): { completionPostponed: boolean; completionNote: string | null } {
+  const last = o.completionLog.at(-1);
+  if (!last || last.to !== o.estimatedCompletion || !last.to) return { completionPostponed: false, completionNote: null };
+  return { completionPostponed: !!last.from && last.to > last.from, completionNote: last.note };
 }
 
 export function toMessageView(db: Db, m: MessageRec): MessageView {
@@ -246,7 +324,7 @@ export function toMessageView(db: Db, m: MessageRec): MessageView {
   return {
     id: m.id,
     orderId: m.orderId,
-    orderCode: order?.code ?? "",
+    orderCode: order?.code ?? "", // "" for appointment messages
     type: m.type,
     channel: m.channel,
     recipientMasked: maskContact(m.channel, m.recipient),

@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import {
   centralUrl,
   contactChannel,
+  COMPLETION_NOTE_MAX,
+  ESTIMATE_STATUSES,
   normalizeCode,
   MANUAL_TRANSITIONS,
   ORDER_STATUSES,
@@ -17,13 +19,52 @@ import {
 import { generateCode } from "../code.js";
 import { isDateString, iso, toDateString } from "../clock.js";
 import type { Ctx } from "../context.js";
-import { actorOf, addMessage, applyStatus, logStatus, toDetail, toSummary } from "../domain.js";
+import { actorOf, addMessage, applyStatus, germanDate, logStatus, toAppointmentView, toDetail, toSummary } from "../domain.js";
 import type { OrderRec, UserRec } from "../types.js";
 import { EMAIL_ERROR, PHONE_ERROR, asObject, fail, invalid, isEmail, isPhone, optDate, optText } from "../validation.js";
 
 const FILTERS: OrderFilter[] = ["alle", "offen", "freigabe", "abholbereit", "ueberfaellig", "heute_abgeholt"];
 const PHOTO_RE = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/;
 const MAX_PHOTO_BYTES = 3_000_000;
+
+export interface NewOrderFields {
+  item: string;
+  category: string | null;
+  customerName: string | null;
+  customerEmail: string | null;
+  customerPhone: string;
+  plannedPickupDate: string | null;
+  estimatedCompletion: string | null;
+}
+
+/** Creates an order (validated fields) with the status link message. Used by "Neuer Auftrag" and by drop-off appointments. */
+export function insertOrder(ctx: Ctx, user: UserRec, f: NewOrderFields, now: number): OrderRec {
+  const d = ctx.store.db;
+  const order: OrderRec = {
+    id: `o${++d.counters.order}`,
+    code: generateCode(ctx.rng, (c) => d.orders.some((o) => o.code === c)),
+    ...f,
+    status: "ANGENOMMEN",
+    createdAt: iso(now),
+    readyAt: null,
+    pickedUpAt: null,
+    photoMime: null,
+    log: [],
+    subscription: null,
+    consentLog: [],
+    booking: null,
+    estimates: [],
+    completionLog: [],
+    readyMessageSent: false,
+    reminderSent: false,
+  };
+  logStatus(order, now, null, "ANGENOMMEN", actorOf(user));
+  d.orders.push(order);
+  // R27: status link right at intake: mail if an address was captured, else SMS to the phone number (simulated)
+  const linkChannel = contactChannel(f.customerEmail, f.customerPhone)!; // the phone number is required
+  addMessage(d, order, "STATUSLINK", linkChannel, linkChannel === "MAIL" ? f.customerEmail! : f.customerPhone, now);
+  return order;
+}
 
 export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
   const db = () => ctx.store.db;
@@ -95,41 +136,39 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
       photo = { mime: m![1], data };
     }
 
-    const d = db();
     const now = ctx.now();
-    const user = req.user as UserRec;
-    const order: OrderRec = {
-      id: `o${++d.counters.order}`,
-      code: generateCode(ctx.rng, (c) => d.orders.some((o) => o.code === c)),
-      item,
-      category,
-      customerName,
-      customerEmail,
-      customerPhone,
-      plannedPickupDate,
-      estimatedCompletion,
-      status: "ANGENOMMEN",
-      createdAt: iso(now),
-      readyAt: null,
-      pickedUpAt: null,
-      photoMime: photo?.mime ?? null,
-      log: [],
-      subscription: null,
-      consentLog: [],
-      booking: null,
-      estimates: [],
-      readyMessageSent: false,
-      reminderSent: false,
-    };
-    const actor = actorOf(user);
-    logStatus(order, now, null, "ANGENOMMEN", actor);
-    if (photo) ctx.store.photos.save(order.id, photo.mime, photo.data);
-    d.orders.push(order);
-    // R27: status link right at intake: mail if an address was captured, else SMS to the phone number (simulated)
-    const linkChannel = contactChannel(customerEmail, customerPhone)!; // the phone number is required
-    addMessage(d, order, "STATUSLINK", linkChannel, linkChannel === "MAIL" ? customerEmail! : customerPhone!, now);
+    const order = insertOrder(ctx, req.user as UserRec, { item: item!, category, customerName, customerEmail, customerPhone: customerPhone!, plannedPickupDate, estimatedCompletion }, now);
+    if (photo) {
+      order.photoMime = photo.mime;
+      ctx.store.photos.save(order.id, photo.mime, photo.data);
+    }
+    const d = db();
     reply.code(201);
     return toDetail(d, ctx.store.photos, order, now);
+  });
+
+  // New expected completion date, e.g. a part arrives later. Optional message to the intake contact.
+  app.post("/api/betrieb/orders/:id/completion", async (req): Promise<OrderDetail> => {
+    const o = findOrder((req.params as { id: string }).id);
+    const body = asObject(req.body);
+    if (!ESTIMATE_STATUSES.includes(o.status)) {
+      fail(409, "NOT_ALLOWED", "Das Datum lässt sich nur ändern, solange der Auftrag noch in der Werkstatt ist.");
+    }
+    const date = optDate(body.date, "Das Datum");
+    const now = ctx.now();
+    if (date && date < toDateString(now)) invalid("Das Datum darf nicht in der Vergangenheit liegen.");
+    const note = optText(body.note, "Der Grund", COMPLETION_NOTE_MAX);
+    if (date === o.estimatedCompletion) invalid("Das ist schon das eingetragene Datum.");
+    const notify = body.notify === true && !!date;
+    const from = o.estimatedCompletion;
+    o.estimatedCompletion = date;
+    o.completionLog.push({ at: iso(now), from, to: date, note: date ? note : null, notified: notify, actorName: (req.user as UserRec).displayName });
+    if (notify) {
+      const channel = contactChannel(o.customerEmail, o.customerPhone)!;
+      const to = channel === "MAIL" ? o.customerEmail! : o.customerPhone!;
+      addMessage(db(), o, "NEUES_DATUM", channel, to, now, `${germanDate(date!)}${note ? `\n${note}` : ""}`);
+    }
+    return toDetail(db(), ctx.store.photos, o, now);
   });
 
   app.get("/api/betrieb/orders/:id", async (req): Promise<OrderDetail> => {
@@ -178,6 +217,10 @@ export function orderRoutes(app: FastifyInstance, ctx: Ctx) {
     const [y, m, d] = (date as string).split("-").map(Number);
     const weekday = WEEKDAYS[(new Date(y, m - 1, d).getDay() + 6) % 7];
     const openingHours = db().settings.openingHours[weekday].map((iv) => ({ ...iv }));
-    return { date: date as string, entries, completions, openingHours };
+    const dropOffs = db()
+      .appointments.filter((a) => (a.state === "GEBUCHT" || a.state === "ERSCHIENEN" || a.state === "NICHT_ERSCHIENEN") && toDateString(Date.parse(a.start)) === date)
+      .sort((a, b) => Date.parse(a.start) - Date.parse(b.start))
+      .map((a) => toAppointmentView(db(), a));
+    return { date: date as string, entries, completions, openingHours, dropOffs };
   });
 }

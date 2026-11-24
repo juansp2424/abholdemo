@@ -6,6 +6,7 @@ import { api, errorMessage } from "../api";
 import { formatDayShort, formatDateTime, formatSlot } from "../format";
 import { Alert, PageHeader, StatusBadge, useLoad } from "../ui";
 import { EstimateSection } from "./Estimate";
+import { CompletionForm } from "./Completion";
 
 export function OrderDetailScreen({ id }: { id: string }) {
   const { data, error, setData } = useLoad(() => api<OrderDetail>("GET", `/api/betrieb/orders/${encodeURIComponent(id)}`), [id]);
@@ -131,7 +132,10 @@ function Body(props: {
           <dt>Geplantes Abholdatum</dt>
           <dd>{o.plannedPickupDate ? formatDayShort(o.plannedPickupDate) : "Nicht erfasst"}</dd>
           <dt>Voraussichtlich fertig</dt>
-          <dd>{o.estimatedCompletion ? formatDayShort(o.estimatedCompletion) : "Nicht erfasst"}</dd>
+          <dd>
+            {o.estimatedCompletion ? formatDayShort(o.estimatedCompletion) : "Nicht erfasst"}
+            {o.completionLog.length > 0 ? <span className="muted"> (geändert)</span> : null}
+          </dd>
           {o.pickupDeadline ? (
             <>
               <dt>Abholfrist</dt>
@@ -139,6 +143,7 @@ function Body(props: {
             </>
           ) : null}
         </dl>
+        <CompletionForm o={o} onChange={setO} />
       </section>
 
       <section className="card">

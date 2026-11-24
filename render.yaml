@@ -8,6 +8,8 @@ services:
     envVars:
       - key: TRUST_PROXY
         value: "1"
+      - key: TZ               # Öffnungszeiten, Abholzeiten und Abgabetermine gelten in deutscher Zeit
+        value: Europe/Berlin
       - key: KUNDE_URL        # Cloudflare Pages Adresse der Kundenwebsite
         sync: false
       - key: CORS_ORIGINS     # beide Pages Adressen, kommagetrennt

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { normalizeCode, type PublicBusiness } from "@abholdemo/shared";
 import { ApiFailure, getBusiness, getOrder } from "../api";
-import { navigate } from "../App";
+import { Link, navigate } from "../App";
 import { FALLBACK_HINT } from "../texts";
 
 export function StartPage({ web }: { web: string }) {
@@ -71,6 +71,13 @@ export function StartPage({ web }: { web: string }) {
         {error && <p id="code-error" role="alert" className="alert">{error}</p>}
         <button type="submit" className="btn" disabled={busy}>{busy ? "Einen Moment bitte" : "Status ansehen"}</button>
       </form>
+      {biz.dropOffEnabled && (
+        <section className="box" aria-labelledby="tb">
+          <h2 id="tb">Noch nicht abgegeben?</h2>
+          <p>Buchen Sie online einen Termin zum Abgeben.</p>
+          <Link to={`/b/${encodeURIComponent(web)}/termin`} className="btn secondary">Termin zum Abgeben buchen</Link>
+        </section>
+      )}
       <section aria-labelledby="how">
         <h2 id="how">So geht es</h2>
         <ol className="steps">

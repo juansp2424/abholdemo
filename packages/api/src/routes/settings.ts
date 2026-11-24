@@ -67,6 +67,14 @@ function parseQuickCategories(value: unknown): string[] {
   return result;
 }
 
+function parseDropOffCapacity(value: unknown, current: number): number {
+  if (value === undefined) return current;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 10) {
+    return invalid("Die Anzahl Abgaben pro Zeitfenster muss eine ganze Zahl von 1 bis 10 sein.");
+  }
+  return value;
+}
+
 function parseSettings(body: unknown, webname: string, current: BusinessSettings): BusinessSettings {
   const b = asObject(body);
   const name = optText(b.name, "Der Name des Betriebs", 60);
@@ -109,6 +117,8 @@ function parseSettings(body: unknown, webname: string, current: BusinessSettings
     defaultChannel: b.defaultChannel as Channel,
     messageTemplate: template,
     quickCategories: b.quickCategories === undefined ? current.quickCategories : parseQuickCategories(b.quickCategories),
+    dropOffEnabled: b.dropOffEnabled === undefined ? current.dropOffEnabled : b.dropOffEnabled === true,
+    dropOffCapacity: parseDropOffCapacity(b.dropOffCapacity, current.dropOffCapacity),
   };
 }
 

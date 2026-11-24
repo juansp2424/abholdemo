@@ -124,6 +124,8 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
   WHATSAPP: "WhatsApp",
 };
 
+export const CHANNELS_ALL: Channel[] = ["MAIL", "SMS", "WHATSAPP"];
+
 /** Cost per simulated message in Euro. */
 export const CHANNEL_COST_EUR: Record<Channel, number> = {
   MAIL: 0,
@@ -144,7 +146,12 @@ export type MessageType =
   | "MITTEILUNG"
   | "KOSTENVORANSCHLAG"
   | "KV_ERINNERUNG"
-  | "KV_ENTSCHEIDUNG";
+  | "KV_ENTSCHEIDUNG"
+  | "NEUES_DATUM"
+  | "TERMIN_BESTAETIGUNG"
+  | "TERMIN_ERINNERUNG"
+  | "TERMIN_GEAENDERT"
+  | "TERMIN_ABSAGE";
 
 export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   STATUSLINK: "Statuslink",
@@ -154,6 +161,11 @@ export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   KOSTENVORANSCHLAG: "Kostenvoranschlag",
   KV_ERINNERUNG: "Erinnerung Kostenvoranschlag",
   KV_ENTSCHEIDUNG: "Bestätigung Entscheidung",
+  NEUES_DATUM: "Neues Fertigstellungsdatum",
+  TERMIN_BESTAETIGUNG: "Terminbestätigung",
+  TERMIN_ERINNERUNG: "Terminerinnerung",
+  TERMIN_GEAENDERT: "Termin geändert",
+  TERMIN_ABSAGE: "Terminabsage",
 };
 
 /** Channel for a staff message to the intake contact: mail if an email was captured, otherwise SMS to the phone number. */
@@ -226,6 +238,8 @@ export interface BusinessSettings {
   defaultChannel: Channel; // preselected channel in the customer form
   messageTemplate: string; // 10..500 chars
   quickCategories: string[]; // quick selection for new orders, owner defined, empty by default, max 20 entries of 1..40 chars
+  dropOffEnabled: boolean; // customers can book a drop-off appointment online
+  dropOffCapacity: number; // 1..10 drop-offs per time window, separate from pickups
 }
 
 /** Response of PUT /api/betrieb/settings: the saved settings plus the number of upcoming pickup bookings that no longer fit the opening hours and were removed. */
@@ -353,6 +367,26 @@ export interface OrderDetail extends OrderSummary {
   statusUrl: string;
   estimates: EstimateView[]; // oldest first
   canEstimate: boolean; // status in ESTIMATE_STATUSES
+  completionLog: CompletionChange[]; // changes of estimatedCompletion after intake, oldest first
+  canChangeCompletion: boolean; // status in ESTIMATE_STATUSES (still in the workshop)
+}
+
+/** A change of the expected completion date. */
+export interface CompletionChange {
+  at: string;
+  from: string | null; // YYYY-MM-DD
+  to: string | null;
+  note: string | null; // reason for the customer
+  notified: boolean;
+  actorName: string;
+}
+
+export const COMPLETION_NOTE_MAX = 200;
+
+export interface SetCompletionRequest {
+  date: string | null; // YYYY-MM-DD, not in the past; null removes the date
+  note?: string | null; // reason for the customer, max COMPLETION_NOTE_MAX
+  notify: boolean; // message to the intake contact (only when a new date is set and it changed)
 }
 
 export interface CreateOrderRequest {
@@ -413,6 +447,7 @@ export interface DaySlotList {
   entries: DaySlotEntry[]; // booked pickups, sorted by start
   completions: DayCompletionEntry[]; // expected completions on this date, sorted by code
   openingHours: TimeInterval[]; // opening hours of this weekday, for the time axis of the calendar (empty = closed)
+  dropOffs: AppointmentView[]; // drop-off appointments of the day (not cancelled), sorted by start
 }
 
 // ---------------------------------------------------------------------------
@@ -465,6 +500,7 @@ export interface AdvanceTimeResponse extends DemoClock {
 // ---------------------------------------------------------------------------
 
 export interface PublicBusiness {
+  dropOffEnabled: boolean;
   name: string;
   webname: string;
   logoDataUrl: string | null;
@@ -487,6 +523,8 @@ export interface PublicOrderView {
   notifyChannel: Channel | null; // channel only, never the contact
   slotBookingOpen: boolean; // status in SLOT_STATUSES
   estimateState: EstimateState | null; // newest cost estimate; amount and text only after the phone digits (see PublicEstimate)
+  completionPostponed: boolean; // the current expected completion is later than the previous one
+  completionNote: string | null; // reason given with the current date
 }
 
 export interface SubscribeRequest {
@@ -604,6 +642,79 @@ export interface PublicEstimateDecisionRequest {
   phoneEnd: string;
   version: number;
   decision: "FREIGEGEBEN" | "ABGELEHNT";
+}
+
+// ---------------------------------------------------------------------------
+// Drop-off appointments (Abgabetermin online buchen)
+// ---------------------------------------------------------------------------
+
+export type AppointmentState = "GEBUCHT" | "ABGESAGT_KUNDE" | "ABGESAGT_BETRIEB" | "ERSCHIENEN" | "NICHT_ERSCHIENEN";
+
+export const APPOINTMENT_STATE_LABELS: Record<AppointmentState, string> = {
+  GEBUCHT: "Gebucht",
+  ABGESAGT_KUNDE: "Vom Kunden abgesagt",
+  ABGESAGT_BETRIEB: "Vom Betrieb abgesagt",
+  ERSCHIENEN: "Erschienen, Auftrag angelegt",
+  NICHT_ERSCHIENEN: "Nicht erschienen",
+};
+
+/** Customers book from the next calendar day on, up to this many days ahead. */
+export const DROPOFF_DAYS_AHEAD = 14;
+/** At most this many booked (open) appointments per phone number. */
+export const DROPOFF_MAX_OPEN_PER_PHONE = 3;
+export const DROPOFF_SERVICE_MAX = 60;
+export const DROPOFF_ITEM_MAX = 120;
+
+export interface AppointmentView {
+  id: string;
+  start: string; // ISO
+  end: string;
+  service: string;
+  item: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  channel: Channel;
+  state: AppointmentState;
+  createdAt: string;
+  orderId: string | null; // after "Auftrag anlegen"
+  orderCode: string | null;
+}
+
+/** Customer view of an appointment (by its secret link). No name or contact. */
+export interface PublicAppointment {
+  token: string;
+  businessName: string;
+  webname: string;
+  start: string;
+  end: string;
+  service: string;
+  item: string;
+  state: AppointmentState;
+  changeable: boolean; // booked and still in the future
+  orderCode: string | null; // after drop-off: status page /a/{code}
+}
+
+/** GET /api/public/b/{webname}/dropoff */
+export interface PublicDropOffInfo {
+  enabled: boolean;
+  services: string[]; // the business quick selection
+  days: PublicSlotDay[]; // free windows, from tomorrow, DROPOFF_DAYS_AHEAD days
+}
+
+export interface BookDropOffRequest {
+  start: string; // ISO, must equal a generated window start
+  service: string; // 1..60
+  item: string; // 1..120, e.g. "Auto, VW Golf"
+  customerName: string; // 1..80
+  customerPhone: string;
+  customerEmail?: string | null; // required for channel MAIL
+  channel: Channel;
+  website?: string; // must stay empty (simple bot trap)
+}
+
+export interface RebookRequest {
+  start: string;
 }
 
 // ---------------------------------------------------------------------------

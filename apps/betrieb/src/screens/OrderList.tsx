@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ORDER_FILTER_LABELS } from "@abholdemo/shared";
-import type { OrderFilter, OrderSummary } from "@abholdemo/shared";
+import type { AppointmentView, OrderFilter, OrderSummary } from "@abholdemo/shared";
 import { api } from "../api";
 import { formatSlot } from "../format";
 import { Alert, PageHeader, StatusBadge, useDebounced, useLoad } from "../ui";
@@ -17,6 +17,9 @@ export function OrderList() {
     [filter, dq]
   );
 
+  const drops = useLoad(() => api<AppointmentView[]>("GET", "/api/betrieb/appointments"), []);
+  const todayDrops = (drops.data ?? []).filter((a) => a.state === "GEBUCHT").length;
+
   return (
     <>
       <PageHeader title="Aufträge">
@@ -24,6 +27,13 @@ export function OrderList() {
           Neuer Auftrag
         </a>
       </PageHeader>
+
+      {todayDrops > 0 ? (
+        <p className="hint-box dropoff-hint">
+          <span>Heute {todayDrops === 1 ? "kommt 1 Kunde" : `kommen ${todayDrops} Kunden`} mit Termin zum Abgeben.</span>
+          <a className="btn btn-secondary" href="#/kalender">Im Kalender ansehen</a>
+        </p>
+      ) : null}
 
       <div className="chips" role="group" aria-label="Filter">
         {FILTERS.map((f) => (

@@ -6,6 +6,9 @@ import type {
   ErrorCode,
   LookupRequest,
   LookupResponse,
+  BookDropOffRequest,
+  PublicAppointment,
+  PublicDropOffInfo,
   PublicBusiness,
   PublicEstimate,
   PublicEstimateDecisionRequest,
@@ -83,3 +86,12 @@ export const getEstimate = (code: string, phoneEnd: string) =>
   call<PublicEstimate>("POST", `/api/public/orders/${encodeURIComponent(code)}/estimate`, { phoneEnd } satisfies PublicEstimateRequest);
 export const decideEstimate = (code: string, phoneEnd: string, version: number, decision: "FREIGEGEBEN" | "ABGELEHNT") =>
   call<PublicEstimate>("POST", `/api/public/orders/${encodeURIComponent(code)}/estimate/decision`, { phoneEnd, version, decision } satisfies PublicEstimateDecisionRequest);
+
+/** Drop-off appointments */
+export const getDropOff = (web: string) => call<PublicDropOffInfo>("GET", `${biz(web)}/dropoff`);
+export const bookDropOff = (web: string, body: BookDropOffRequest) => call<PublicAppointment>("POST", `${biz(web)}/dropoff`, body);
+const appt = (token: string) => `/api/public/appointments/${encodeURIComponent(token)}`;
+export const getAppointment = (token: string) => call<PublicAppointment>("GET", appt(token));
+export const getAppointmentSlots = (token: string) => call<PublicSlotsResponse>("GET", `${appt(token)}/slots`);
+export const cancelAppointment = (token: string) => call<PublicAppointment>("DELETE", appt(token));
+export const rebookAppointment = (token: string, start: string) => call<PublicAppointment>("PUT", appt(token), { start });

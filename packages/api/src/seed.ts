@@ -1,9 +1,9 @@
 import { DEFAULT_MESSAGE_TEMPLATE, type BusinessSettings, type Channel, type OrderStatus } from "@abholdemo/shared";
 import { DAY_MS, iso } from "./clock.js";
-import { addMessage, addSubscription, germanDate, logStatus, SYSTEM_ACTOR, type Actor } from "./domain.js";
+import { addAppointmentMessage, addMessage, addSubscription, germanDate, logStatus, SYSTEM_ACTOR, type Actor } from "./domain.js";
 import { hashPassword } from "./password.js";
-import { firstFreeSlot, lastPastSlot } from "./slots.js";
-import type { Db, OrderRec } from "./types.js";
+import { dropOffDays, firstFreeSlot, generateSlotDays, lastPastSlot } from "./slots.js";
+import type { AppointmentRec, Db, OrderRec } from "./types.js";
 
 const HOUR = 3_600_000;
 const DEMO_PASSWORD = "demo1234";
@@ -32,6 +32,8 @@ export function defaultSettings(): BusinessSettings {
     defaultChannel: "MAIL",
     messageTemplate: DEFAULT_MESSAGE_TEMPLATE,
     quickCategories: ["Wartung Paket 1", "Reifenwechsel (Sommer) mit Einlagerung"],
+    dropOffEnabled: true,
+    dropOffCapacity: 2,
   };
 }
 
@@ -50,8 +52,9 @@ export function seed(now: number): Db {
     ],
     tokens: [],
     orders: [],
+    appointments: [],
     messages: [],
-    counters: { order: 0, message: 0, user: 2 },
+    counters: { order: 0, message: 0, user: 2, appointment: 0 },
   };
 
   interface Spec {
@@ -96,6 +99,7 @@ export function seed(now: number): Db {
       readyMessageSent: false,
       reminderSent: false,
       estimates: [],
+      completionLog: [],
     };
     logStatus(o, s.createdAt, null, "ANGENOMMEN", s.creator ?? u2);
     for (const [to, at, actor] of s.steps) {
@@ -198,6 +202,9 @@ export function seed(now: number): Db {
     addMessage(db, o, "KOSTENVORANSCHLAG", e.channel, to, e.sentAt, germanDate(validUntil));
     if (e.decided) addMessage(db, o, "KV_ENTSCHEIDUNG", e.channel, to, e.decided.at, e.decided.state === "FREIGEGEBEN" ? "freigegeben" : "abgelehnt");
   }
+  // Q9XB2M was postponed by one day (part arrives later), customer informed by mail.
+  qx.completionLog.push({ at: iso(ago(0, 6)), from: day(now), to: qx.estimatedCompletion, note: "Das Ersatzteil kommt einen Tag später.", notified: true, actorName: u1.name });
+  addMessage(db, qx, "NEUES_DATUM", "MAIL", "lena@beispiel.de", ago(0, 6), `${germanDate(qx.estimatedCompletion!)}\nDas Ersatzteil kommt einen Tag später.`);
   estimate(qx, { cents: 18990, text: "Bremsbeläge vorne und hinten ersetzen, Bremsflüssigkeit wechseln.", channel: "MAIL", sentAt: ago(0, 5), validDays: 6 });
   estimate(ht, { cents: 34900, text: "Neuer Reifensatz (4 Stück) inklusive Montage und Wuchten.", channel: "WHATSAPP", sentAt: ago(0, 1), validDays: 7 });
   estimate(kl, {
@@ -208,6 +215,31 @@ export function seed(now: number): Db {
   // 7KP4QX has a booked slot: next free slot of today, or the next opening day.
   const slot = firstFreeSlot(db.settings, now, db.orders);
   if (slot) kp.booking = { start: iso(slot.start), end: iso(slot.end), bookedAt: iso(now), released: false };
+
+  // Drop-off appointments: one today that already became an order (H7RT3K), three booked for the coming days.
+  function appointment(start: number, end: number, f: Omit<AppointmentRec, "id" | "token" | "start" | "end" | "createdAt" | "reminderSent" | "orderId" | "state">, createdAt: number, state: AppointmentRec["state"] = "GEBUCHT", orderId: string | null = null) {
+    const a: AppointmentRec = {
+      id: `a${++db.counters.appointment}`, token: `DEMO${String(db.counters.appointment).padStart(6, "0")}`, start: iso(start), end: iso(end),
+      createdAt: iso(createdAt), reminderSent: false, orderId, state, ...f,
+    };
+    db.appointments.push(a);
+    if (state === "GEBUCHT" || orderId) addAppointmentMessage(db, a, "TERMIN_BESTAETIGUNG", createdAt);
+    return a;
+  }
+  // The window in which H7RT3K was handed over (only when that was during today's opening hours).
+  const handover = lastPastSlot(db.settings, Date.parse(ht.createdAt) + db.settings.slotLengthMinutes * 60_000);
+  if (handover && day(handover.start) === day(Date.parse(ht.createdAt))) {
+    appointment(handover.start, handover.end, { service: "Reifenwechsel (Sommer) mit Einlagerung", item: "Auto, Winterreifen aufziehen", customerName: ht.customerName!, customerPhone: ht.customerPhone!, customerEmail: ht.customerEmail, channel: "MAIL" }, ago(3), "ERSCHIENEN", ht.id);
+  }
+  const todayLeft = generateSlotDays(db.settings, now, 1).flatMap((d) => d.slots).filter((s) => new Date(s.start).getDate() === new Date(now).getDate());
+  const upcoming = dropOffDays(db.settings, now);
+  const later = [todayLeft[2] ?? todayLeft[0], upcoming[0]?.slots[2], upcoming[1]?.slots[4]].filter(Boolean) as { start: number; end: number }[];
+  const people = [
+    { service: "Wartung Paket 1", item: "Fahrrad, Trekkingrad", customerName: "Felix Probe", customerPhone: "+49 151 00000041", customerEmail: null, channel: "WHATSAPP" as const },
+    { service: "Reifenwechsel (Sommer) mit Einlagerung", item: "Auto, VW Golf", customerName: "Anna Muster", customerPhone: "+49 151 00000042", customerEmail: "anna@beispiel.de", channel: "MAIL" as const },
+    { service: "Bremsen prüfen", item: "Auto, Opel Corsa", customerName: "Ben Beispiel", customerPhone: "+49 151 00000043", customerEmail: null, channel: "SMS" as const },
+  ];
+  later.forEach((s, i) => appointment(s.start, s.end, people[i], ago(2 - i * 0.5)));
 
   return db;
 }

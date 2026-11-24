@@ -249,3 +249,106 @@ Die folgende Beschreibung ist der ursprüngliche Plan.
 5. Echtes WhatsApp: braucht WhatsApp-Business-Konto, von Meta freigegebene Nachrichtenvorlage und eine Einwilligung des Kunden bei der Annahme. Der jetzige Zustimmungstext (`CONSENT_TEXT`) deckt das nicht ab.
 
 **Nicht Teil dieses Plans:** Zahlung, digitale Unterschrift, PDF-Erzeugung.
+
+## 15. Abgabetermin online buchen (2026-11-23)
+
+Status: umgesetzt am 2026-11-23 mit den Empfehlungen (eigene Kapazität, Vorlauf ab dem nächsten Tag, Kanal nach Wahl des Kunden, keine Dauer je Leistung). Abweichungen vom Plan:
+
+* Die Kundenseite zeigt zuerst die Tage als Knöpfe und dann die Zeiten des gewählten Tags, statt alle 14 Tage untereinander.
+* "Nicht erschienen" setzt das System nach dem Tag des Termins von selbst; am Tag selbst kann der Betrieb es von Hand setzen.
+* Ändert der Betrieb die Öffnungszeiten, bleiben bereits gebuchte Termine bestehen und erscheinen weiter im Kalender. Der Betrieb sagt sie bei Bedarf dort ab. Ein automatischer Hinweis beim Speichern fehlt noch.
+* Löschfrist (Punkt 5) ist nicht umgesetzt, nur der Hinweis bei der Buchung.
+* Die zentrale Startseite `/` hat noch keinen Einstieg zur Terminbuchung, nur die Betriebsseite `/b/<Webname>`.
+* Contract: `docs/CONTRACT.md` Abschnitt 6.10.
+
+Der folgende Text ist der ursprüngliche Plan.
+
+Ziel: Der Kunde bucht den Termin zum Abgeben selbst, statt anzurufen. Pingo deckt damit den ganzen Weg ab, vom ersten Kontakt bis zur Abholung.
+
+**Ablauf**
+
+1. Der Kunde öffnet `/b/<Webname>/termin` (Link auf der Website des Betriebs, im Google-Profil oder als QR-Code). Auf der Startseite des Betriebs gibt es dazu einen Knopf "Termin zum Abgeben buchen".
+2. Er wählt die Leistung aus der Schnellauswahl des Betriebs (oder "Etwas anderes" mit Freitext), beschreibt kurz den Gegenstand (zum Beispiel "Auto, VW Golf") und wählt einen freien Termin.
+3. Er gibt Name, Telefonnummer (Pflicht) und optional eine Mailadresse an und wählt, wie er die Bestätigung bekommt (Mail, SMS oder WhatsApp).
+4. Er bekommt eine Bestätigung mit einem Link zum Termin (`/termin/<Zugangscode>`). Dort kann er absagen oder umbuchen.
+5. Einen Tag vorher kommt höchstens eine Erinnerung.
+6. Kommt der Kunde, tippt der Betrieb im Kalender auf den Termin und dann auf "Auftrag anlegen". Der neue Auftrag ist mit Leistung, Gegenstand, Name und Kontakt vorausgefüllt, der Anhänger lässt sich sofort drucken. Ab dann läuft alles wie bisher.
+
+**Datenmodell**
+
+* Neue Liste `appointments` in der Datenbank, getrennt von den Aufträgen. `OrderStatus` bleibt unverändert, es entstehen keine Aufträge für Kunden, die nicht kommen.
+* Termin: Nummer, Zugangscode (zufällig, 10 Zeichen, nicht erratbar), Beginn und Ende, Leistung, Gegenstand, Name, Telefon, Mail, Kanal, Zustand, angelegt am, Auftragsnummer nach der Umwandlung, Erinnerung gesendet.
+* Zustände: `GEBUCHT`, `ABGESAGT_KUNDE`, `ABGESAGT_BETRIEB`, `ERSCHIENEN` (Auftrag angelegt), `NICHT_ERSCHIENEN`.
+* Neue Einstellungen: `dropOffCapacity` (Abgaben pro Zeitfenster, Vorgabe 2, getrennt von den Abholungen) und `dropOffEnabled` (Schalter, Vorgabe an). Öffnungszeiten und Länge eines Zeitfensters werden mitbenutzt.
+* Alte Datendateien bekommen beim Laden `appointments: []` und die neuen Einstellungen.
+
+**Zeitfenster**
+
+* Dieselbe Erzeugung wie bei den Abholzeiten (`slots.ts`), aber 14 Tage voraus und frühestens ab dem nächsten Öffnungstag (Vorlauf, damit der Betrieb planen kann).
+* Frei ist ein Fenster, solange weniger als `dropOffCapacity` gebuchte Termine darin liegen. Prüfen und Schreiben geschehen in einem Schritt, damit es keine Doppelbuchung gibt.
+* Ändert der Betrieb die Öffnungszeiten, werden Termine, die nicht mehr passen, nicht still gelöscht: Der Betrieb sieht sie und sagt sie mit Nachricht ab (wie bei den Abholzeiten mit Hinweis beim Speichern).
+
+**Nachrichten**
+
+* Neue Arten: `TERMIN_BESTAETIGUNG`, `TERMIN_ERINNERUNG` (einmal, am Vortag), `TERMIN_ABSAGE` (Betrieb sagt ab), `TERMIN_GEAENDERT` (Umbuchung).
+* Kanal wie vom Kunden gewählt. Es sind Nachrichten zu einer Buchung, die der Kunde selbst angestoßen hat, keine Werbung. Die Einwilligung für "Sag mir Bescheid" ist davon getrennt.
+* Texte enthalten Betrieb, Datum, Uhrzeit und den Link, aber weder Namen noch Gegenstand.
+
+**Kundenseite**
+
+* `/b/<Webname>/termin`: Leistung, Gegenstand, Termin, Kontakt, Bestätigung. Auf dem Handy in Schritten, ein Schritt pro Bildschirm.
+* `/termin/<Zugangscode>`: Termin ansehen, absagen, umbuchen. Nach der Umwandlung in einen Auftrag führt die Seite zur Statusseite `/a/<Nummer>`.
+
+**Betriebs App**
+
+* Kalender: Abgaben erscheinen als eigene Balken (eigene Farbe, Beschriftung mit Leistung statt Auftragsnummer) neben den Abholungen. Antippen zeigt Name, Telefon, Leistung und die Knöpfe "Auftrag anlegen", "Nicht erschienen", "Absagen".
+* Auftragsliste: oben ein Hinweis "Heute 3 Abgaben" mit Link zum Kalender.
+* "Neuer Auftrag" kann aus einem Termin vorausgefüllt werden.
+* Einstellungen: Abschnitt "Abgabetermine" mit Schalter, Kapazität und dem Link für die eigene Website (zum Kopieren) samt QR-Code.
+
+**Schutz vor Missbrauch**
+
+Die Buchung ist ohne Anmeldung offen. Damit niemand alle Termine mit erfundenen Daten blockiert: höchstens 3 offene Termine pro Telefonnummer, Begrenzung pro Gerät (vorhandene Sperre), ein unsichtbares Feld gegen einfache Bots. Nicht erschienene Kunden sieht der Betrieb am Zustand.
+
+**Backend**
+
+* Öffentlich: `GET /api/public/b/:webname/dropoff/slots`, `POST /api/public/b/:webname/dropoff` (bucht), `GET/DELETE/PUT /api/public/appointments/:token` (ansehen, absagen, umbuchen).
+* Betrieb: `GET /api/betrieb/appointments?date=`, `POST /api/betrieb/appointments/:id/convert` (legt den Auftrag an, gibt `OrderDetail` zurück), `.../no-show`, `.../cancel`.
+* `day-slots` liefert die Abgaben mit, damit der Kalender beide zeigt.
+* Erinnerung und "Nicht erschienen" über die Prüfung vor jeder Anfrage und die Demouhr.
+* Seed: drei Termine (heute, morgen, übermorgen), einer davon schon zum Auftrag geworden.
+
+**Reihenfolge:** 1. Vertrag und Typen, 2. Backend mit Tests, 3. Kundenseite, 4. Kalender und Umwandlung in der Betriebs App, 5. Einstellungen, Seed, Doku. Geschätzt zwei Arbeitstage für die Demo.
+
+**Offene Entscheidungen**
+
+1. Eigene Kapazität für Abgaben (empfohlen) oder dieselbe wie für Abholungen.
+2. Vorlauf: frühestens nächster Öffnungstag (empfohlen) oder auch noch heute.
+3. Bestätigung über einen vom Kunden gewählten Kanal (empfohlen) oder nur per SMS an die Pflichtnummer.
+4. Dauer je Leistung (zum Beispiel Reifenwechsel 30 Minuten, Inspektion halber Tag) jetzt noch nicht. Die Demo plant nur die Übergabe, nicht die Werkstattzeit. Das wäre ein eigener, größerer Schritt (Hebebühnen, Mitarbeiter).
+5. Datenschutz: Name und Telefonnummer werden vor einem Auftrag gespeichert. Dafür braucht es einen Hinweis bei der Buchung und eine Löschfrist (Vorschlag: 30 Tage nach dem Termin, wenn kein Auftrag entstand). Rechtlich zu prüfen.
+
+## 16. Neues Fertigstellungsdatum mit Nachricht (2026-11-23)
+
+Status: umgesetzt am 2026-11-23 wie geplant. Contract: `docs/CONTRACT.md` Abschnitt 6.9. Schließt die Lücke aus Abschnitt 11 ("Das Datum der voraussichtlichen Fertigstellung ändert sich nicht automatisch").
+
+**Ablauf**
+
+1. Im Auftrag (Angenommen oder In Arbeit) steht bei "Voraussichtlich fertig" ein Knopf "Datum ändern".
+2. Der Betrieb wählt das neue Datum, optional einen kurzen Grund (zum Beispiel "Das Ersatzteil kommt erst Donnerstag.") und lässt den Haken "Kunden benachrichtigen" gesetzt (Vorgabe an).
+3. Die Kundenseite zeigt sofort das neue Datum, bei einer Verschiebung mit dem Hinweis "verschoben" und dem Grund.
+4. Der Kunde bekommt eine Nachricht, der Kalender zeigt den Auftrag unter "Voraussichtlich fertig" am neuen Tag.
+
+**Regeln**
+
+* Nachrichtenart `NEUES_DATUM`: `Guten Tag, Ihr Auftrag {nummer} bei {betrieb} wird voraussichtlich am {TT.MM.JJJJ} fertig. {Grund} Den Stand sehen Sie hier: {link}`. Ohne Gegenstand und Namen.
+* Empfänger wie bei der Mitteilung: der Kontakt der Annahme (Mail, wenn erfasst, sonst SMS). Eine Nachricht nur, wenn sich das Datum wirklich ändert.
+* Das Datum darf nicht in der Vergangenheit liegen. Es kann auch erstmals gesetzt oder entfernt werden (dann ohne Nachricht).
+* Jede Änderung kommt in einen Verlauf am Auftrag (Zeitpunkt, altes und neues Datum, Grund, wer).
+* `PublicOrderView` bekommt `completionPostponed` (ja oder nein) und `completionNote` (der Grund, höchstens 200 Zeichen). Der Grund ist für den Kunden gedacht, also kein interner Text.
+
+**Backend:** `POST /api/betrieb/orders/:id/completion` mit `{ date, note?, notify }` gibt `OrderDetail` zurück. Feld `completionLog` am Auftrag, alte Daten bekommen `[]`. Seed: `Q9XB2M` ist einmal verschoben worden.
+
+**Tests:** Datum setzen, verschieben mit und ohne Nachricht, kein Datum in der Vergangenheit, keine Nachricht ohne Änderung, nicht bei Abholbereit, Abgeholt oder Storniert, Kundenseite zeigt Datum und Grund.
+
+**Aufwand:** etwa ein halber Tag. Sinnvoll als erster Schritt vor Abschnitt 15, weil er klein ist und sofort einen sichtbaren Nutzen bringt.

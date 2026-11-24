@@ -83,7 +83,7 @@ export function publicRoutes(app: FastifyInstance, ctx: Ctx) {
 
   const publicBusiness = (): PublicBusiness => {
     const s = db().settings;
-    return { name: s.name, webname: s.webname, logoDataUrl: s.logoDataUrl, pickupDeadlineDays: s.pickupDeadlineDays, defaultChannel: s.defaultChannel };
+    return { name: s.name, webname: s.webname, logoDataUrl: s.logoDataUrl, pickupDeadlineDays: s.pickupDeadlineDays, defaultChannel: s.defaultChannel, dropOffEnabled: s.dropOffEnabled };
   };
 
   const ORDER = "/api/public/b/:webname/orders/:code";

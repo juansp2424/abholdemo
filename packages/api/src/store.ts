@@ -38,6 +38,14 @@ export class PhotoStore {
   }
 }
 
+/** Fills in what older data files do not have yet (drop-off appointments). */
+function migrate(db: Db) {
+  db.appointments ??= [];
+  db.counters.appointment ??= 0;
+  db.settings.dropOffEnabled ??= true;
+  db.settings.dropOffCapacity ??= 2;
+}
+
 /** Optional remote persistence (Supabase). The in memory Db stays the source of truth. */
 export interface RemoteDb {
   initial: Db | null;
@@ -56,11 +64,13 @@ export class Store {
     if (remote?.initial) {
       this.db = remote.initial;
       this.db.settings.quickCategories ??= [];
-      for (const o of this.db.orders) o.estimates ??= []; // data from before cost estimates existed
+      for (const o of this.db.orders) (o.estimates ??= [], o.completionLog ??= []); // data from before these features
+      migrate(this.db);
     } else if (!remote && dbFile && existsSync(dbFile)) {
       this.db = JSON.parse(readFileSync(dbFile, "utf8")) as Db;
       this.db.settings.quickCategories ??= []; // data files from before the quick selection existed
-      for (const o of this.db.orders) o.estimates ??= []; // ... and before cost estimates existed
+      for (const o of this.db.orders) (o.estimates ??= [], o.completionLog ??= []); // ... and before later features
+      migrate(this.db);
     } else {
       this.db = seedFn();
       this.save();

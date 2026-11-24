@@ -84,8 +84,9 @@ export function StatusPage({ web, code, abmelden, central = false }: { web: stri
           )}
           {order.estimatedCompletion && (
             <>
-              <dt>Voraussichtlich fertig</dt>
+              <dt>Voraussichtlich fertig{order.completionPostponed ? " (verschoben)" : ""}</dt>
               <dd>{formatDate(order.estimatedCompletion)}</dd>
+              {order.completionNote && <dd className="small">{order.completionNote}</dd>}
             </>
           )}
         </dl>

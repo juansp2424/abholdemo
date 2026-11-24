@@ -20,7 +20,7 @@ export function Settings() {
 }
 
 function SettingsForm({ initial }: { initial: BusinessSettings }) {
-  const { refreshBusiness } = useApp();
+  const { refreshBusiness, business } = useApp();
   const [s, setS] = useState<BusinessSettings>(initial);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: "error" | "success"; text: string } | null>(null);
@@ -219,6 +219,28 @@ function SettingsForm({ initial }: { initial: BusinessSettings }) {
           <span>Abholfrist in Tagen</span>
           <input type="number" min={1} max={60} value={s.pickupDeadlineDays} onChange={(e) => set("pickupDeadlineDays", Number(e.target.value))} />
         </label>
+      </section>
+
+      <section className="card">
+        <h2>Abgabetermine</h2>
+        <p className="muted">Kunden buchen online einen Termin, an dem sie ihr Fahrzeug oder Fahrrad bringen. Die Termine erscheinen im Kalender. Kommt der Kunde, legen Sie dort mit einem Tippen den Auftrag an.</p>
+        <label className="check">
+          <input type="checkbox" checked={s.dropOffEnabled} onChange={(e) => set("dropOffEnabled", e.target.checked)} />
+          <span>{s.dropOffEnabled ? "Online buchbar" : "Nicht online buchbar"}</span>
+        </label>
+        <label className="field">
+          <span>Wie viele Abgaben pro Zeitfenster (1 bis 10)</span>
+          <input type="number" min={1} max={10} value={s.dropOffCapacity} onChange={(e) => set("dropOffCapacity", Number(e.target.value))} />
+          <small className="muted">Getrennt von den Abholungen. Die Zeitfenster folgen den Öffnungszeiten und der Länge einer Abholzeit. Buchbar ab dem nächsten Tag, 14 Tage im Voraus.</small>
+        </label>
+        {business ? (
+          <div className="preview">
+            <strong>Link für Ihre Website und Ihr Google-Profil</strong>
+            <p>
+              <a href={`${business.customerUrl}/b/${s.webname}/termin`} target="_blank" rel="noreferrer">{`${business.customerUrl}/b/${s.webname}/termin`}</a>
+            </p>
+          </div>
+        ) : null}
       </section>
 
       <section className="card">

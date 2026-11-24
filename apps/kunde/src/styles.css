@@ -132,3 +132,12 @@ fieldset { border: 0; padding: 0; margin: 12px 0; }
 .pingo-link { display: inline-block; }
 .pingo { display: block; height: 40px; width: auto; }
 .pingo-bar + .page { padding-top: 12px; }
+
+/* Drop-off booking */
+.slot.on, .slot.on:active { background: var(--accent); color: var(--accent-text); }
+.dropoff { display: flex; flex-direction: column; gap: 16px; }
+.dropoff fieldset { border: 0; padding: 0; margin: 0 0 8px; }
+.sr-only, .trap { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.day { flex: none; min-height: 48px; padding: 6px 12px; border: 2px solid var(--hairline); border-radius: 12px; background: #fff; color: var(--text); font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.day.on { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }

@@ -147,14 +147,14 @@ describe("public responses contain no personal data", () => {
     expect(Object.keys(r.json).sort()).toEqual(
       [
         "code", "status", "statusLabel", "statusText", "estimatedCompletion", "plannedPickupDate", "slot",
-        "pickupDeadlineDays", "pickupDeadline", "canSubscribe", "notifyActive", "notifyChannel", "slotBookingOpen", "estimateState",
+        "pickupDeadlineDays", "pickupDeadline", "canSubscribe", "notifyActive", "notifyChannel", "slotBookingOpen", "estimateState", "completionPostponed", "completionNote",
       ].sort(),
     );
     expect(r.json).toMatchObject({ status: "ABHOLBEREIT", notifyActive: true, notifyChannel: "MAIL", slotBookingOpen: true, canSubscribe: false, pickupDeadlineDays: 14 });
     expect(r.json.slot).not.toBeNull();
     expect(Object.keys(r.json.slot).sort()).toEqual(["end", "start"]);
     const bus = await env.pub("GET", PUB);
-    expect(Object.keys(bus.json).sort()).toEqual(["defaultChannel", "logoDataUrl", "name", "pickupDeadlineDays", "webname"]);
+    expect(Object.keys(bus.json).sort()).toEqual(["defaultChannel", "dropOffEnabled", "logoDataUrl", "name", "pickupDeadlineDays", "webname"]);
   });
 
   it("shows estimated completion and sets no cookies", async () => {

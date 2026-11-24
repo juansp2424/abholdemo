@@ -19,7 +19,7 @@ export function messageRoutes(app: FastifyInstance, ctx: Ctx) {
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || seq(b.id) - seq(a.id));
 
     const counts = new Map<string, number>();
-    for (const m of inMonth) counts.set(m.orderId, (counts.get(m.orderId) ?? 0) + 1);
+    for (const m of inMonth) if (m.orderId) counts.set(m.orderId, (counts.get(m.orderId) ?? 0) + 1);
     const perOrder = [...counts].map(([orderId, count]) => ({
       orderId,
       orderCode: db.orders.find((o) => o.id === orderId)?.code ?? "",

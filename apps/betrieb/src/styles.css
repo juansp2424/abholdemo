@@ -509,3 +509,10 @@ fieldset.field { display: flex; flex-direction: column; gap: 4px; }
 .login-card .pingo { height: 36px; align-self: flex-start; margin-bottom: 4px; }
 @media (prefers-color-scheme: dark) { .pingo-word { filter: brightness(0) invert(1); } }
 @media (max-width: 767px) { .pingo { height: 24px; } .brand-sep { display: none; } }
+
+/* Drop-off appointments in the calendar */
+.cal-dot.cal-abgabe { background: var(--green); }
+.cal-bar.cal-abgabe { --bar: var(--green); --bar-tint: var(--green-tint); --bar-text: var(--green-text); }
+.cal-bar.cal-abgabe-done { --bar: #8e8e93; --bar-tint: var(--fill); --bar-text: var(--label-2); }
+.cal-service { font-family: var(--font); letter-spacing: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dropoff-hint { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }

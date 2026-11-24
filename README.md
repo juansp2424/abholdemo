@@ -65,6 +65,14 @@ Drei Beispiele sind in den Aufträgen vorhanden (nach "Demodaten zurücksetzen" 
 
 Mit "Zeit vorspulen" (Menü "Demo") kommt einen Tag vor Ende der Gültigkeit eine Erinnerung, danach läuft der Voranschlag ab.
 
+## Abgabetermin und neues Fertigstellungsdatum testen
+
+**Termin buchen (Kunde):** `http://localhost:5174/b/werkstatt-demo/termin` (oder auf `http://localhost:5174/b/werkstatt-demo` den Knopf "Termin zum Abgeben buchen"). Leistung, Gegenstand, Tag und Uhrzeit, Name und Handynummer eingeben. Danach erscheint die Seite des Termins mit "Termin ändern" und "Termin absagen". Die Bestätigung steht in der Betriebs App unter "Nachrichten".
+
+**Termin in der Werkstatt:** Menü "Kalender", grüne Balken sind Abgaben (die Demo bringt drei für die nächsten Tage mit). Antippen, dann "Kunde ist da: Auftrag anlegen": der Auftrag ist vorausgefüllt, der Anhänger lässt sich gleich drucken. Außerdem "Nicht erschienen" und "Absagen" (mit Nachricht). Ein- und ausschalten und die Anzahl pro Zeitfenster unter "Einstellungen", Abschnitt "Abgabetermine".
+
+**Neues Fertigstellungsdatum:** Auftrag öffnen, im Abschnitt "Kunde" auf "Fertigstellungsdatum ändern". Neues Datum, optional Grund, Haken "Kunden benachrichtigen". Die Kundenseite zeigt das Datum, bei einer Verschiebung mit "(verschoben)" und dem Grund. Beispiel: `Q9XB2M` wurde schon einmal verschoben.
+
 ## Demoablauf (drei Minuten)
 
 **Schnellauswahl:** Die Demo bringt zwei Einträge mit ("Wartung Paket 1" und "Reifenwechsel (Sommer) mit Einlagerung"). Sie erscheinen als Knöpfe beim neuen Auftrag. Der Inhaber kann sie unter "Einstellungen", Abschnitt "Schnellauswahl für neue Aufträge", ändern, löschen oder ergänzen. Nach "Demodaten zurücksetzen" sind wieder die zwei Einträge da.

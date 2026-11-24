@@ -1,7 +1,9 @@
 import type {
   BusinessSettings,
+  CompletionChange,
   ConsentEvent,
   DeliveryStatus,
+  AppointmentState,
   Channel,
   EstimateChannel,
   EstimateDecisionSource,
@@ -31,9 +33,27 @@ export interface EstimateRec {
   reminderSent: boolean;
 }
 
+export interface AppointmentRec {
+  id: string;
+  token: string; // secret part of the customer link /termin/{token}
+  start: string;
+  end: string;
+  service: string;
+  item: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  channel: Channel;
+  state: AppointmentState;
+  createdAt: string;
+  orderId: string | null;
+  reminderSent: boolean;
+}
+
 export interface MessageRec {
   id: string;
-  orderId: string;
+  orderId: string; // "" for appointment messages
+  appointmentId?: string;
   type: MessageType;
   channel: Channel;
   recipient: string; // full contact, only masked in views
@@ -67,6 +87,7 @@ export interface OrderRec {
   readyMessageSent: boolean;
   reminderSent: boolean;
   estimates: EstimateRec[]; // oldest first, at most one OFFEN
+  completionLog: CompletionChange[];
 }
 
 export interface Db {
@@ -75,6 +96,7 @@ export interface Db {
   users: UserRec[];
   tokens: { token: string; userId: string; createdAt: string }[];
   orders: OrderRec[];
+  appointments: AppointmentRec[];
   messages: MessageRec[];
-  counters: { order: number; message: number; user: number };
+  counters: { order: number; message: number; user: number; appointment: number };
 }

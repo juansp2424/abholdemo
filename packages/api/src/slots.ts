@@ -1,6 +1,6 @@
-import { WEEKDAYS, type BusinessSettings } from "@abholdemo/shared";
+import { DROPOFF_DAYS_AHEAD, WEEKDAYS, type BusinessSettings } from "@abholdemo/shared";
 import { toDateString } from "./clock.js";
-import type { OrderRec } from "./types.js";
+import type { AppointmentRec, OrderRec } from "./types.js";
 
 export interface RawSlot {
   start: number;
@@ -75,6 +75,18 @@ export function activeBookings(orders: OrderRec[], startMs: number, excludeOrder
   return orders.filter(
     (o) => o.id !== excludeOrderId && o.booking && !o.booking.released && Date.parse(o.booking.start) === startMs,
   ).length;
+}
+
+/** Booked drop-off appointments starting at `startMs`, optionally ignoring one appointment. */
+export function activeDropOffs(appointments: AppointmentRec[], startMs: number, excludeId?: string): number {
+  return appointments.filter((a) => a.id !== excludeId && a.state === "GEBUCHT" && Date.parse(a.start) === startMs).length;
+}
+
+/** Windows customers can book for a drop-off: from tomorrow (local), DROPOFF_DAYS_AHEAD days. Capacity is not applied. */
+export function dropOffDays(settings: Pick<BusinessSettings, "openingHours" | "slotLengthMinutes">, nowMs: number): RawSlotDay[] {
+  const t = new Date(nowMs);
+  const tomorrow = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1).getTime();
+  return generateSlotDays(settings, tomorrow - 1, DROPOFF_DAYS_AHEAD);
 }
 
 /** First slot with free capacity (used by the seed). */

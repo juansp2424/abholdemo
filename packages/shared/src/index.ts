@@ -151,7 +151,8 @@ export type MessageType =
   | "TERMIN_BESTAETIGUNG"
   | "TERMIN_ERINNERUNG"
   | "TERMIN_GEAENDERT"
-  | "TERMIN_ABSAGE";
+  | "TERMIN_ABSAGE"
+  | "ABHOLZEIT_ERINNERUNG";
 
 export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   STATUSLINK: "Statuslink",
@@ -166,6 +167,7 @@ export const MESSAGE_TYPE_LABELS: Record<MessageType, string> = {
   TERMIN_ERINNERUNG: "Terminerinnerung",
   TERMIN_GEAENDERT: "Termin geändert",
   TERMIN_ABSAGE: "Terminabsage",
+  ABHOLZEIT_ERINNERUNG: "Erinnerung Abholzeit",
 };
 
 /** Channel for a staff message to the intake contact: mail if an email was captured, otherwise SMS to the phone number. */
@@ -333,6 +335,7 @@ export interface SlotBooking {
   end: string; // ISO
   bookedAt: string;
   released: boolean; // true after ABGEHOLT or STORNIERT or customer cancel
+  reminderSent?: boolean; // reminder on the day before was created (ABHOLZEIT_ERINNERUNG)
 }
 
 export interface OrderSummary {

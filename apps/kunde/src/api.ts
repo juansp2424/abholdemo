@@ -95,3 +95,4 @@ export const getAppointment = (token: string) => call<PublicAppointment>("GET", 
 export const getAppointmentSlots = (token: string) => call<PublicSlotsResponse>("GET", `${appt(token)}/slots`);
 export const cancelAppointment = (token: string) => call<PublicAppointment>("DELETE", appt(token));
 export const rebookAppointment = (token: string, start: string) => call<PublicAppointment>("PUT", appt(token), { start });
+export const getDropOffBusinesses = () => call<{ name: string; webname: string; logoDataUrl: string | null }[]>("GET", "/api/public/dropoff-businesses");

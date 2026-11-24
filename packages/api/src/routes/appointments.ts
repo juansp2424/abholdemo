@@ -71,6 +71,12 @@ export function appointmentPublicRoutes(app: FastifyInstance, ctx: Ctx) {
     return a ?? null;
   };
 
+  // Central start page: which businesses take online drop-off appointments (one in the demo).
+  app.get("/api/public/dropoff-businesses", async () => {
+    const s = db().settings;
+    return s.dropOffEnabled ? [{ name: s.name, webname: s.webname, logoDataUrl: s.logoDataUrl }] : [];
+  });
+
   app.get("/api/public/b/:webname/dropoff", async (req): Promise<PublicDropOffInfo> => {
     const s = db().settings;
     if ((req.params as { webname: string }).webname !== s.webname) fail(404, "NOT_FOUND", "Diesen Betrieb gibt es nicht.");

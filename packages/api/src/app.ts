@@ -3,7 +3,7 @@ import { PUBLIC_LOOKUP_MIN_MS } from "@abholdemo/shared";
 import { DAY_MS, systemClock, type Clock } from "./clock.js";
 import { cryptoRandomInt, type RandomInt } from "./code.js";
 import type { Ctx } from "./context.js";
-import { sweepAppointments, sweepEstimates, sweepOverdue } from "./domain.js";
+import { sweepAppointments, sweepEstimates, sweepOverdue, sweepPickupReminders } from "./domain.js";
 import { createRateLimiter } from "./rateLimit.js";
 import { authRoutes, authedAuthRoutes } from "./routes/auth.js";
 import { demoRoutes } from "./routes/demo.js";
@@ -76,7 +76,9 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
   app.addHook("onRequest", async (req) => {
     if (!req.url.startsWith("/api/")) return;
     const r = sweepOverdue(store.db, now());
-    const a = sweepAppointments(store.db, now());
+    const appts = sweepAppointments(store.db, now());
+    const pickups = sweepPickupReminders(store.db, now()); // both always run (no short circuit)
+    const a = appts || pickups;
     if (sweepEstimates(store.db, now()) || a || r.newlyOverdue.length) store.dirty = true;
   });
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { PHONE_END_LENGTH, normalizeCode, type CentralOrderView } from "@abholdemo/shared";
-import { ApiFailure, getCentral, lookupOrder } from "../api";
+import { ApiFailure, getCentral, getDropOffBusinesses, lookupOrder } from "../api";
 import { Link, navigate } from "../App";
 import { FALLBACK_HINT } from "../texts";
 import { StatusPage } from "./StatusPage";
@@ -12,6 +12,10 @@ export function CentralStart() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const codeInput = useRef<HTMLInputElement>(null);
+  const [dropOff, setDropOff] = useState<{ name: string; webname: string }[]>([]);
+  useEffect(() => {
+    getDropOffBusinesses().then(setDropOff, () => undefined);
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,6 +83,17 @@ export function CentralStart() {
           <li>Tippen Sie auf "Status ansehen". Sie sehen den Betrieb und den Stand.</li>
         </ol>
       </section>
+      {dropOff.length > 0 && (
+        <section className="box" aria-labelledby="tb">
+          <h2 id="tb">Noch nicht abgegeben?</h2>
+          <p>Buchen Sie online einen Termin, an dem Sie Ihr Fahrzeug oder Fahrrad bringen.</p>
+          {dropOff.map((b) => (
+            <Link key={b.webname} to={`/b/${encodeURIComponent(b.webname)}/termin`} className="btn secondary">
+              {dropOff.length === 1 ? "Termin zum Abgeben buchen" : `${b.name}: Termin buchen`}
+            </Link>
+          ))}
+        </section>
+      )}
       <p className="hint">{FALLBACK_HINT}</p>
     </main>
   );

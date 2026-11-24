@@ -54,6 +54,9 @@ export function buildMessageText(
       const [date, note] = freeText.split("\n");
       return `Guten Tag, Ihr Auftrag ${code} bei ${settings.name} wird voraussichtlich am ${date} fertig.${note ? ` ${note}` : ""} Den Stand sehen Sie hier: ${link}`;
     }
+    case "ABHOLZEIT_ERINNERUNG":
+      // freeText: date and time of the booked pickup
+      return `Guten Tag, morgen holen Sie Ihren Auftrag ${code} bei ${settings.name} ab: ${freeText}. Ändern oder absagen: ${link}`;
     case "ERINNERUNG":
       return (
         `Guten Tag, Ihr Auftrag ${code} bei ${settings.name} liegt zur Abholung bereit. ` +

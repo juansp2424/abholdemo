@@ -11,6 +11,7 @@ import {
   type EstimateState,
   type PublicAppointment,
   KUNDE_BASE_URL,
+  contactChannel,
   type EstimateView,
   type MessageType,
   type MessageView,
@@ -151,6 +152,28 @@ export function addAppointmentMessage(db: Db, a: AppointmentRec, type: MessageTy
   return msg;
 }
 
+/**
+ * One reminder on the day before a booked pickup, to the subscription contact if active, else the intake contact.
+ * Not when the pickup was booked on that same day (the customer just chose it).
+ */
+export function sweepPickupReminders(db: Db, nowMs: number): boolean {
+  let changed = false;
+  const today = toDateString(nowMs);
+  for (const o of db.orders) {
+    const b = o.booking;
+    if (!b || b.released || b.reminderSent || !SLOT_STATUSES.includes(o.status)) continue;
+    const start = Date.parse(b.start);
+    if (start <= nowMs || toDateString(start - DAY_MS) !== today || toDateString(Date.parse(b.bookedAt)) >= today) continue;
+    const sub = o.subscription?.active ? o.subscription : null;
+    const channel = sub ? sub.channel : contactChannel(o.customerEmail, o.customerPhone);
+    const to = sub ? sub.contact : channel === "MAIL" ? o.customerEmail : o.customerPhone;
+    if (channel && to) addMessage(db, o, "ABHOLZEIT_ERINNERUNG", channel, to, nowMs, whenText(b.start));
+    b.reminderSent = true;
+    changed = true;
+  }
+  return changed;
+}
+
 /** One reminder on the day before; after the appointment's day an appointment that is still booked counts as no-show. */
 export function sweepAppointments(db: Db, nowMs: number): boolean {
   let changed = false;
@@ -161,7 +184,7 @@ export function sweepAppointments(db: Db, nowMs: number): boolean {
     if (day < today) {
       a.state = "NICHT_ERSCHIENEN";
       changed = true;
-    } else if (!a.reminderSent && toDateString(Date.parse(a.start) - DAY_MS) === today) {
+    } else if (!a.reminderSent && toDateString(Date.parse(a.start) - DAY_MS) === today && toDateString(Date.parse(a.createdAt)) < today) {
       addAppointmentMessage(db, a, "TERMIN_ERINNERUNG", nowMs);
       a.reminderSent = true;
       changed = true;

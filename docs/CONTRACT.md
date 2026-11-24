@@ -176,6 +176,8 @@ Slot generation: for each of the next 7 calendar days including today (demo cloc
 
 `DELETE /api/public/b/:webname/orders/:code/slot` → `PublicOrderView` (booking removed).
 
+Reminder for a booked pickup: on the day before, one message `ABHOLZEIT_ERINNERUNG` (`Guten Tag, morgen holen Sie Ihren Auftrag {nummer} bei {betrieb} ab: {Wochentag, TT.MM.JJJJ, HH:MM Uhr}. Ändern oder absagen: {link}`) to the subscription contact if active, else the intake contact (`contactChannel()`). Not when the booking was made on that same day; a new booking resets it (`SlotBooking.reminderSent`). Created by the sweep before every API request.
+
 ### 6.8 Cost estimates (Kostenvoranschlag)
 
 Types in `packages/shared`: `EstimateView`, `CreateEstimateRequest`, `DecideEstimateRequest`, `PublicEstimate`. `OrderSummary.estimateState` (newest estimate), `OrderDetail.estimates` (oldest first) and `canEstimate`, `PublicOrderView.estimateState` (state only, never amount or text). Order filter `freigabe` lists orders whose newest estimate is `OFFEN`.
@@ -209,6 +211,7 @@ Settings: `dropOffEnabled` (default true), `dropOffCapacity` 1..10 (default 2, s
 
 Customer (no auth):
 
+* `GET /api/public/dropoff-businesses` → `[{ name, webname, logoDataUrl }]` of businesses with `dropOffEnabled` (central start page entry).
 * `GET /api/public/b/:webname/dropoff` → `PublicDropOffInfo` `{ enabled, services (quick selection), days }` (free windows only).
 * `POST /api/public/b/:webname/dropoff` body `BookDropOffRequest` → `201 PublicAppointment`. Validation `400`; `MAIL` needs `customerEmail`; filled `website` (bot trap) → `400`; window not generated → `400 SLOT_INVALID`; full → `409 SLOT_FULL`; more than 3 open appointments for the phone number → `409 NOT_ALLOWED`; switched off → `409`. Creates `TERMIN_BESTAETIGUNG`.
 * `GET /api/public/appointments/:token` → `PublicAppointment` (no name or contact). Unknown token: neutral `404`, counts towards the lock.
@@ -224,7 +227,7 @@ Staff (any logged in staff):
 Messages (`orderId` is `""`, `appointmentId` set; never name or item; channel as chosen by the customer):
 
 * `TERMIN_BESTAETIGUNG`: `Guten Tag, Ihr Termin zum Abgeben bei {betrieb} ist gebucht: {Wochentag, TT.MM.JJJJ, HH:MM Uhr}. Absagen oder ändern: {link}`
-* `TERMIN_ERINNERUNG` (once, on the day before), `TERMIN_GEAENDERT`, `TERMIN_ABSAGE` analog. `{link}` = `{central}/termin/{token}`, for the cancellation `{central}/b/{webname}/termin`.
+* `TERMIN_ERINNERUNG` (once, on the day before, not when booked on that day), `TERMIN_GEAENDERT`, `TERMIN_ABSAGE` analog. `{link}` = `{central}/termin/{token}`, for the cancellation `{central}/b/{webname}/termin`.
 
 Lifecycle: the sweep before every API request sends the reminder and sets `NICHT_ERSCHIENEN` after the appointment's day. Old data files get `appointments: []`, `counters.appointment` and the two settings on load.
 

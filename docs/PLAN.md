@@ -258,7 +258,8 @@ Status: umgesetzt am 2026-11-23 mit den Empfehlungen (eigene Kapazität, Vorlauf
 * "Nicht erschienen" setzt das System nach dem Tag des Termins von selbst; am Tag selbst kann der Betrieb es von Hand setzen.
 * Ändert der Betrieb die Öffnungszeiten, bleiben bereits gebuchte Termine bestehen und erscheinen weiter im Kalender. Der Betrieb sagt sie bei Bedarf dort ab. Ein automatischer Hinweis beim Speichern fehlt noch.
 * Löschfrist (Punkt 5) ist nicht umgesetzt, nur der Hinweis bei der Buchung.
-* Die zentrale Startseite `/` hat noch keinen Einstieg zur Terminbuchung, nur die Betriebsseite `/b/<Webname>`.
+* Die zentrale Startseite `/` hat seit dem 2026-11-24 einen Kasten "Noch nicht abgegeben?" mit dem Knopf zur Terminbuchung (Liste der Betriebe mit Online-Terminen, in der Demo einer).
+* Auch Abholzeiten haben jetzt eine Erinnerung am Vortag (`ABHOLZEIT_ERINNERUNG`), siehe CONTRACT 6.7. Erinnerungen kommen bei Abgabe und Abholung nur, wenn der Termin nicht erst am Vortag gebucht wurde.
 * Contract: `docs/CONTRACT.md` Abschnitt 6.10.
 
 Der folgende Text ist der ursprüngliche Plan.

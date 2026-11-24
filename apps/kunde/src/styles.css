@@ -126,3 +126,9 @@ fieldset { border: 0; padding: 0; margin: 12px 0; }
 .hosted-by { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; font-size: 0.8125rem; color: var(--muted); }
 .hosted-by-name { font-weight: 600; }
 @media print { .hosted-by { display: none; } }
+
+/* Pingo logo, top left of every page */
+.pingo-bar { max-width: 560px; margin: 0 auto; padding: 16px 16px 0; }
+.pingo-link { display: inline-block; }
+.pingo { display: block; height: 40px; width: auto; }
+.pingo-bar + .page { padding-top: 12px; }

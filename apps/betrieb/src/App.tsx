@@ -16,6 +16,7 @@ import { Settings } from "./screens/Settings";
 import { Staff } from "./screens/Staff";
 import { DemoTools } from "./screens/DemoTools";
 import { Icon } from "./icons";
+import { PingoLogo } from "./PingoLogo";
 
 function useHashRoute(): string {
   const read = () => window.location.hash.replace(/^#/, "") || "/auftraege";
@@ -149,6 +150,8 @@ function Shell({ user, onLogout }: { user: StaffUser; onLogout: () => void }) {
       <div className="shell">
         <header className="topbar no-print">
           <div className="brand">
+            <PingoLogo />
+            <span className="brand-sep" aria-hidden="true" />
             {business?.logoDataUrl ? <img className="brand-logo" src={business.logoDataUrl} alt="" /> : null}
             <span className="brand-name">{business?.name ?? "Abholstatus"}</span>
           </div>

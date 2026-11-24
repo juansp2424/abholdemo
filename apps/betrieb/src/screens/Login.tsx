@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import type { LoginResponse } from "@abholdemo/shared";
 import { api, errorMessage } from "../api";
 import { Alert } from "../ui";
+import { PingoLogo } from "../PingoLogo";
 
 export function Login({ onLoggedIn }: { onLoggedIn: (r: LoginResponse) => void }) {
   const [username, setUsername] = useState("");
@@ -25,6 +26,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: (r: LoginResponse) => void }
   return (
     <div className="login-wrap">
       <form className="card login-card" onSubmit={submit}>
+        <PingoLogo />
         <h1>Abholstatus Betrieb</h1>
         <p className="muted">Bitte melden Sie sich an.</p>
         <Alert message={error} />

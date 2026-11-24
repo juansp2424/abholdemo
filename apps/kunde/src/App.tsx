@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { PingoLogo } from "./PingoLogo";
 import { CentralStart, CentralStatus } from "./pages/Central";
 import { StartPage } from "./pages/StartPage";
 import { StatusPage } from "./pages/StatusPage";
@@ -50,5 +51,12 @@ export function App() {
   } else {
     page = <CentralStart />;
   }
-  return page;
+  return (
+    <>
+      <header className="pingo-bar">
+        <Link to="/" className="pingo-link" aria-label="Pingo, zur Startseite"><PingoLogo /></Link>
+      </header>
+      {page}
+    </>
+  );
 }

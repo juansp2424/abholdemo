@@ -502,3 +502,10 @@ fieldset.field { border: 0; padding: 0; margin: 0; min-width: 0; }
 fieldset.field legend { font-weight: 600; padding: 0; margin-bottom: 4px; }
 .check input[type="radio"] { width: 18px; height: 18px; min-height: 0; padding: 0; flex: none; accent-color: var(--blue); box-shadow: none; }
 fieldset.field { display: flex; flex-direction: column; gap: 4px; }
+
+/* Pingo logo, top left; the business logo and name sit to the right of it */
+.pingo { display: block; height: 32px; width: auto; flex: none; }
+.brand-sep { align-self: center; width: 1px; height: 24px; background: var(--sep); margin: 0 4px; }
+.login-card .pingo { height: 36px; align-self: flex-start; margin-bottom: 4px; }
+@media (prefers-color-scheme: dark) { .pingo-word { filter: brightness(0) invert(1); } }
+@media (max-width: 767px) { .pingo { height: 24px; } .brand-sep { display: none; } }
